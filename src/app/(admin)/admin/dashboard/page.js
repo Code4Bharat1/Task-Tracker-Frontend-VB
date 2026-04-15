@@ -195,9 +195,9 @@ export default function AdminDashboard() {
     },
     {
       icon: Bug,
-      label: "Open Bugs",
+      label: "ISSUES",
       value: openBugs.length,
-      color: criticalBugs.length > 0 ? "text-[#ff4747]" : "text-[#47ff8a]",
+      color: "text-[#ff4747]",
       sub: `${criticalBugs.length} critical`,
     },
   ];
@@ -414,7 +414,7 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-2">
               <Bug className="w-4 h-4 text-[#ff4747]" />
               <span className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
-                Open Bugs
+                ISSUES
               </span>
             </div>
             <button
@@ -439,13 +439,12 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                   <span
-                    className={`text-[10px] tracking-[0.1em] uppercase font-bold px-2 py-0.5 border ${
-                      b.severity === "CRITICAL"
-                        ? "text-[#ff4747] border-[#ff4747]/30 bg-[#ff4747]/10"
-                        : b.severity === "HIGH"
-                          ? "text-[#e8a847] border-[#e8a847]/30 bg-[#e8a847]/10"
-                          : "text-foreground-muted border-foreground/15 bg-foreground/10"
-                    }`}
+                    className={`text-[10px] tracking-[0.1em] uppercase font-bold px-2 py-0.5 border ${b.severity === "CRITICAL"
+                      ? "text-[#ff4747] border-[#ff4747]/30 bg-[#ff4747]/10"
+                      : b.severity === "HIGH"
+                        ? "text-[#e8a847] border-[#e8a847]/30 bg-[#e8a847]/10"
+                        : "text-foreground-muted border-foreground/15 bg-foreground/10"
+                      }`}
                   >
                     {b.severity}
                   </span>
@@ -456,7 +455,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-center gap-2 py-8 text-[#47ff8a]">
                 <CheckCircle2 className="w-4 h-4" />
                 <p className="text-[11px] tracking-[0.1em] uppercase">
-                  No open bugs!
+                  NO ISSUES !
                 </p>
               </div>
             )}

@@ -71,7 +71,7 @@ function DeptModal({ mode, initial, onClose, onSave, saving }) {
     if (mode === "add") {
       getUsers({ filterRole: "department_head", limit: 100 })
         .then(setUsers)
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [mode]);
 
@@ -231,7 +231,7 @@ function AssignHeadModal({ dept, onClose, onSave, saving }) {
             : null,
         );
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, [dept._id]);
 
@@ -284,11 +284,10 @@ function AssignHeadModal({ dept, onClose, onSave, saving }) {
               {/* None option */}
               <button
                 onClick={() => setSelectedId(null)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 border transition-colors text-left ${
-                  selectedId === null
+                className={`w-full flex items-center gap-3 px-3 py-2.5 border transition-colors text-left ${selectedId === null
                     ? "border-primary/40 bg-primary/5"
                     : "border-outline hover:border-outline hover:bg-surface-container"
-                }`}
+                  }`}
               >
                 <div className="w-7 h-7 bg-surface-container border border-outline flex items-center justify-center text-[10px] text-foreground-muted">
                   —
@@ -305,11 +304,10 @@ function AssignHeadModal({ dept, onClose, onSave, saving }) {
                 <button
                   key={u._id}
                   onClick={() => setSelectedId(u._id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 border transition-colors text-left ${
-                    selectedId === u._id
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 border transition-colors text-left ${selectedId === u._id
                       ? "border-primary/40 bg-primary/5"
                       : "border-outline hover:border-outline hover:bg-surface-container"
-                  }`}
+                    }`}
                 >
                   <div className="w-7 h-7 bg-surface-container border border-outline flex items-center justify-center text-[11px] font-bold text-primary">
                     {u.name.charAt(0)}
@@ -436,7 +434,7 @@ function MembersDrawer({ dept, onClose }) {
         );
         setMembers(filtered);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, [dept._id]);
 
@@ -638,7 +636,7 @@ export default function DepartmentManagement() {
             Admin / Department Management
           </p>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            Departments <span className="text-primary">_</span>
+            Departments <span className="text-primary"></span>
           </h1>
         </div>
         <button

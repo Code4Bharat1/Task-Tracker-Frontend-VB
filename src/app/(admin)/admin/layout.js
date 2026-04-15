@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   BookCheck,
+  Trophy,
   Menu,
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -46,6 +47,11 @@ const NAV_ITEMS = [
     label: "Daily Logs",
     icon: BookCheck,
     href: "/admin/daily-logs",
+  },
+  {
+    label: "Leaderboard",
+    icon: Trophy,
+    href: "/admin/leaderboard",
   },
   {
     label: "Settings",

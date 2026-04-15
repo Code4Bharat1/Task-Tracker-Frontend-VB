@@ -435,7 +435,7 @@ export default function UserManagement() {
             Admin / User Management
           </p>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            Users <span className="text-primary">_</span>
+            Users <span className="text-primary"></span>
           </h1>
         </div>
         <button

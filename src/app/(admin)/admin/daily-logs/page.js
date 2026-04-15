@@ -28,11 +28,11 @@ function parseDate(raw) {
     if (raw.toISOString) {
       try {
         return new Date(raw.toISOString());
-      } catch {}
+      } catch { }
     }
     try {
       raw = JSON.stringify(raw);
-    } catch {}
+    } catch { }
   }
   const dt = new Date(raw);
   return isNaN(dt) ? null : dt;
@@ -85,12 +85,12 @@ function LogDetailModal({ log, onClose }) {
   const entries = log.entries?.length
     ? log.entries
     : [
-        {
-          projectName: log.projectName,
-          taskTitle: log.taskTitle,
-          description: log.description,
-        },
-      ];
+      {
+        projectName: log.projectName,
+        taskTitle: log.taskTitle,
+        description: log.description,
+      },
+    ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -227,12 +227,12 @@ export default function DailyLogsPage() {
     const entries = l.entries?.length
       ? l.entries
       : [
-          {
-            projectName: l.projectName,
-            taskTitle: l.taskTitle,
-            description: l.description,
-          },
-        ];
+        {
+          projectName: l.projectName,
+          taskTitle: l.taskTitle,
+          description: l.description,
+        },
+      ];
     const matchSearch =
       !search ||
       (l.userName || "").toLowerCase().includes(search.toLowerCase()) ||

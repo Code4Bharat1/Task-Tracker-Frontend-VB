@@ -155,15 +155,15 @@ function ProjectModal({ mode, initial, onClose, onSave, saving }) {
   const [form, setForm] = useState(
     initial
       ? {
-          name: initial.name,
-          department: initial.department,
-          manager: initial.manager,
-          managerId: initial.managerId,
-          tester: initial.tester,
-          testerId: initial.testerId ?? null,
-          status: initial.status,
-          deadline: initial.deadline,
-        }
+        name: initial.name,
+        department: initial.department,
+        manager: initial.manager,
+        managerId: initial.managerId,
+        tester: initial.tester,
+        testerId: initial.testerId ?? null,
+        status: initial.status,
+        deadline: initial.deadline,
+      }
       : EMPTY_FORM,
   );
   const [errors, setErrors] = useState({});
@@ -188,8 +188,8 @@ function ProjectModal({ mode, initial, onClose, onSave, saving }) {
         if (!mounted) return;
         setEmployees(u || []);
       })
-      .catch(() => {})
-      .finally(() => {});
+      .catch(() => { })
+      .finally(() => { });
     return () => {
       mounted = false;
     };
@@ -444,21 +444,21 @@ function MembersDrawer({ project, onClose }) {
         setBugs([]);
       })
       .finally(() => setBugsLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project?._id ?? project?.id]);
 
   const SEVERITY_COLOR = {
-    LOW:      { text: "text-[#47c8ff]", border: "border-[#47c8ff]/40", bg: "bg-[#47c8ff]/10" },
-    MEDIUM:   { text: "text-[#e8a847]", border: "border-[#e8a847]/40", bg: "bg-[#e8a847]/10" },
-    HIGH:     { text: "text-[#f87343]", border: "border-[#f87343]/40", bg: "bg-[#f87343]/10" },
+    LOW: { text: "text-[#47c8ff]", border: "border-[#47c8ff]/40", bg: "bg-[#47c8ff]/10" },
+    MEDIUM: { text: "text-[#e8a847]", border: "border-[#e8a847]/40", bg: "bg-[#e8a847]/10" },
+    HIGH: { text: "text-[#f87343]", border: "border-[#f87343]/40", bg: "bg-[#f87343]/10" },
     CRITICAL: { text: "text-[#ff4747]", border: "border-[#ff4747]/40", bg: "bg-[#ff4747]/10" },
   };
   const STATUS_COLOR = {
-    OPEN:        "text-[#ff4747]",
+    OPEN: "text-[#ff4747]",
     IN_PROGRESS: "text-[#47c8ff]",
-    RESOLVED:    "text-[#47ff8a]",
-    CLOSED:      "text-foreground-muted",
-    REOPENED:    "text-[#c847ff]",
+    RESOLVED: "text-[#47ff8a]",
+    CLOSED: "text-foreground-muted",
+    REOPENED: "text-[#c847ff]",
   };
 
   return (
@@ -935,7 +935,7 @@ export default function ProjectsOverview() {
             Admin / Projects
           </p>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            Projects <span className="text-primary">_</span>
+            Projects <span className="text-primary"></span>
           </h1>
         </div>
       </div>
