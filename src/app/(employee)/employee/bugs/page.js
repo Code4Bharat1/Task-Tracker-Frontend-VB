@@ -129,7 +129,7 @@ function ReportModal({ reporterId, projects, users, onClose, onSave }) {
           <div className="flex items-center gap-3">
             <Bug className="w-4 h-4 text-[#ff4747]" />
             <p className="text-[11px] tracking-[0.15em] uppercase font-bold text-foreground">
-              Report New Bug
+              Report New Issue
             </p>
           </div>
           <button
@@ -149,7 +149,7 @@ function ReportModal({ reporterId, projects, users, onClose, onSave }) {
           )}
           <div>
             <label className="block text-[10px] tracking-[0.15em] uppercase text-foreground-muted mb-1.5">
-              Bug Title *
+              Issue Title *
             </label>
             <input
               value={form.title}
@@ -260,7 +260,7 @@ function ReportModal({ reporterId, projects, users, onClose, onSave }) {
             disabled={saving}
             className="px-4 py-2 bg-[#ff4747] text-foreground hover:bg-[#e03d3d] text-[11px] tracking-[0.15em] uppercase font-bold transition-colors disabled:opacity-50"
           >
-            {saving ? "Reporting..." : "Report Bug"}
+            {saving ? "Reporting..." : "Report Issue"}
           </button>
         </div>
       </form>
@@ -366,7 +366,7 @@ export default function EmployeeBugsPage() {
       setProjects(projsR.status === "fulfilled" ? projsR.value : []);
       setAllUsers(usrsR.status === "fulfilled" ? usrsR.value : []);
     } catch {
-      setError("Failed to load bugs.");
+      setError("Failed to load issues.");
     } finally {
       setDataLoading(false);
     }
@@ -406,14 +406,14 @@ export default function EmployeeBugsPage() {
             Employee
           </p>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            Bugs
+            Issues
           </h1>
         </div>
         <button
           onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-4 py-2.5 border border-[#ff4747]/30 text-[#ff4747] hover:bg-[#ff4747]/10 text-[11px] tracking-[0.15em] uppercase font-bold transition-colors"
         >
-          <Plus className="w-3.5 h-3.5" /> Report Bug
+          <Plus className="w-3.5 h-3.5" /> Report Issue
         </button>
       </div>
 
@@ -525,7 +525,7 @@ export default function EmployeeBugsPage() {
         <div className="overflow-x-auto">
           <div className="border border-outline bg-surface-low min-w-150">
             <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-6 py-3 border-b border-outline bg-surface-container">
-              {["Bug / Project", "Severity", "Status", "Assignee", ""].map(
+              {["Issue / Project", "Severity", "Status", "Assignee", ""].map(
                 (h) => (
                   <span
                     key={h}
@@ -540,7 +540,7 @@ export default function EmployeeBugsPage() {
               <div className="flex flex-col items-center justify-center py-16 gap-3 text-foreground-muted">
                 <CheckCircle2 className="w-8 h-8 text-[#47ff8a]" />
                 <p className="text-[12px] tracking-[0.1em] uppercase">
-                  No bugs found
+                  No issues found
                 </p>
               </div>
             ) : (

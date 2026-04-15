@@ -1,204 +1,177 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Users,
-  Building2,
   FolderKanban,
-  ClipboardList,
-  Bug,
-  TrendingUp,
-  AlertCircle,
   ArrowRight,
-  CheckCircle2,
-  Shield,
+  Building2,
   Trophy,
+  Bug,
+  CheckCircle2,
+  ClipboardList,
+  Shield,
+  AlertCircle,
+  Circle,
+  Clock,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import AuthLoader from "@/components/AuthLoader";
 import { StatsSkeleton } from "@/components/skeletons";
-import { getUsers } from "@/services/userService";
-import { getDepartments } from "@/services/departmentService";
 import { getProjects } from "@/services/projectService";
-import { getAllLogs } from "@/services/dailyLogService";
+import { getDepartments } from "@/services/departmentService";
 import { getAllBugs } from "@/services/bugService";
-import api from "@/lib/api";
+import { getTasks } from "@/services/taskService";
+import { getAllLogs } from "@/services/dailyLogService";
+import { getLeaderboard } from "@/services/userService";
 
-// ─── Status badge ──────────────────────────────────────────────
+const STATUS_META = {
+  IN_PROGRESS: {
+    label: "In Progress",
+    color: "text-[#47c8ff]",
+    bg: "bg-[#47c8ff]/10",
+    border: "border-[#47c8ff]/20",
+  },
+  COMPLETED: {
+    label: "Completed",
+    color: "text-[#47ff8a]",
+    bg: "bg-[#47ff8a]/10",
+    border: "border-[#47ff8a]/20",
+  },
+};
+
 function StatusBadge({ status }) {
-  const map = {
-    IN_PROGRESS: "text-[#47c8ff] border-[#47c8ff]/30 bg-[#47c8ff]/10",
-    PLANNING: "text-foreground-muted   border-foreground/15   bg-foreground/10",
-    CODE_REVIEW: "text-[#c847ff] border-[#c847ff]/30 bg-[#c847ff]/10",
-    QA_TESTING: "text-[#e8a847] border-[#e8a847]/30 bg-[#e8a847]/10",
-    DEPLOYED: "text-[#47ff8a] border-[#47ff8a]/30 bg-[#47ff8a]/10",
-  };
+  const m = STATUS_META[status] || STATUS_META.IN_PROGRESS;
   return (
     <span
-      className={`inline-flex px-2 py-0.5 text-[10px] tracking-[0.1em] uppercase font-bold border ${map[status] || "text-foreground-muted border-foreground-muted/30 bg-foreground-muted/10"}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] tracking-[0.1em] uppercase font-bold border ${m.bg} ${m.border} ${m.color}`}
     >
-      {status?.replace(/_/g, " ")}
+      <Circle className="w-1.5 h-1.5 fill-current" />
+      {m.label}
     </span>
   );
 }
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const { user, loading } = useAuth();
-  const [users, setUsers] = useState([]);
-  const [depts, setDepts] = useState([]);
+  const { user, loading: authLoading } = useAuth();
+
   const [projects, setProjects] = useState([]);
-  const [logs, setLogs] = useState([]);
+  const [depts, setDepts] = useState([]);
   const [bugs, setBugs] = useState([]);
-  const [modules, setModules] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [logs, setLogs] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== "admin")) router.replace("/login");
-  }, [user, loading, router]);
+    if (!authLoading && (!user || user.role !== "admin")) {
+      router.replace("/login");
+    }
+  }, [user, authLoading, router]);
 
   const loadData = useCallback(async () => {
-    if (!user) return;
     try {
       setDataLoading(true);
-      const [uR, dR, pR, lR, bR] = await Promise.allSettled([
-        getUsers(),
-        getDepartments(),
+      const [pR, dR, bR, tR, lR, lbR] = await Promise.allSettled([
         getProjects(),
-        getAllLogs(),
+        getDepartments(),
         getAllBugs(),
+        getTasks(),
+        getAllLogs(),
+        getLeaderboard("all"),
       ]);
-      const fetchedProjects = pR.status === "fulfilled" ? pR.value : [];
-      setUsers(uR.status === "fulfilled" ? uR.value : []);
+      setProjects(pR.status === "fulfilled" ? pR.value : []);
       setDepts(dR.status === "fulfilled" ? dR.value : []);
-      setProjects(fetchedProjects);
-      setLogs(lR.status === "fulfilled" ? lR.value : []);
       setBugs(bR.status === "fulfilled" ? bR.value : []);
-      // Fetch modules for all projects to compute module-based scores
-      const modResults = await Promise.allSettled(
-        fetchedProjects.map((p) => api.get("/modules", { params: { projectId: p._id } }))
-      );
-      const allMods = modResults.flatMap((r) =>
-        r.status === "fulfilled"
-          ? (r.value?.data?.data ?? r.value?.data?.modules ?? [])
-          : []
-      );
-      setModules(allMods);
+      setTasks(tR.status === "fulfilled" ? tR.value : []);
+      setLogs(lR.status === "fulfilled" ? lR.value : []);
+      const lb = lbR.status === "fulfilled" ? lbR.value : {};
+      setLeaderboard(lb.topOverall ?? lb.leaderboard ?? lb.data ?? []);
     } catch {
-      setError("Failed to load dashboard data.");
+      setError("Could not load dashboard data.");
     } finally {
       setDataLoading(false);
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (!authLoading && user) loadData();
+  }, [authLoading, user, loadData]);
 
-  if (loading || !user) return <AuthLoader />;
+  if (authLoading || !user) return <AuthLoader />;
 
-  const usersArr = Array.isArray(users) ? users : [];
-  const deptsArr = Array.isArray(depts) ? depts : [];
-  const projectsArr = Array.isArray(projects) ? projects : [];
-  const logsArr = Array.isArray(logs) ? logs : [];
-  const bugsArr = Array.isArray(bugs) ? bugs : [];
-  const modulesArr = Array.isArray(modules) ? modules : [];
-
-  const today = new Date().toISOString().split("T")[0];
-  const activeProjects = projectsArr.filter((p) =>
-    ["PLANNING", "IN_PROGRESS", "CODE_REVIEW", "QA_TESTING"].includes(p.status),
-  );
-  const logsToday = logsArr.filter((l) =>
-    (l.date || l.createdAt)?.startsWith(today),
-  );
-
-  // ── Mini Scoreboard helpers ──
-  const allManagerIds = [
-    ...new Set(projectsArr.flatMap((p) => p.managerIds || [])),
-  ];
-  const allTesterIds = [
-    ...new Set(projectsArr.flatMap((p) => p.testerIds || [])),
-  ];
-  const allDevIds = [
-    ...new Set(projectsArr.flatMap((p) => p.developerIds || [])),
-  ];
-  function miniScore(uid) {
-    // 2 pts per daily log (max 40)
-    const logPts = Math.min(
-      logsArr.filter((l) => l.userId === uid).length * 2,
-      40,
+  const activeProjects = projects.filter((p) => p.status !== "COMPLETED");
+  const openBugs = bugs.filter((b) => ["OPEN", "REOPENED"].includes(b.status));
+  const openTasks = tasks.filter((t) => t.status !== "DONE");
+  const today = new Date();
+  const todayLogs = logs.filter((l) => {
+    const d = l.logDate
+      ? new Date(l.logDate)
+      : l.date
+        ? new Date(l.date)
+        : null;
+    if (!d) return false;
+    return (
+      d.getFullYear() === today.getFullYear() &&
+      d.getMonth() === today.getMonth() &&
+      d.getDate() === today.getDate()
     );
-    // 5 pts per completed module (DEV_COMPLETE or beyond), 10 pts if APPROVED/DEPLOYED
-    const modPts = modulesArr
-      .filter((m) => String(m.assignedTo) === String(uid))
-      .reduce((sum, m) => {
-        if (["APPROVED", "DEPLOYED"].includes(m.status)) return sum + 10;
-        if (["DEV_COMPLETE", "CODE_REVIEW", "QA_TESTING"].includes(m.status)) return sum + 5;
-        return sum;
-      }, 0);
-    // -5 pts per open/reopened bug assigned to them (max -30)
-    const bugPen = Math.min(
-      bugsArr.filter(
-        (b) => b.assignedTo === uid && ["OPEN", "REOPENED"].includes(b.status),
-      ).length * 5,
-      30,
-    );
-    return Math.max(0, logPts + modPts - bugPen);
-  }
-  function topThree(ids) {
-    return usersArr
-      .filter((u) => ids.includes(u._id))
-      .map((u) => ({ ...u, score: miniScore(u._id) }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 3);
-  }
-  const topPMs = topThree(allManagerIds);
-  const topDevs = topThree(allDevIds);
-  const topTesters = topThree(allTesterIds);
-  // Overall top 3 across employees only (exclude admins and department heads)
-  const topOverall = topThree(usersArr.filter((u) => u.globalRole === "employee").map((u) => u._id));
-  const openBugs = bugsArr.filter((b) =>
-    ["OPEN", "REOPENED"].includes(b.status),
-  );
-  const criticalBugs = openBugs.filter((b) => b.severity === "CRITICAL");
+  });
+
+  const medals = [
+    {
+      label: "1st",
+      color: "text-[#e8a847]",
+      bg: "bg-[#e8a847]/10",
+      border: "border-[#e8a847]/30",
+    },
+    {
+      label: "2nd",
+      color: "text-foreground-muted",
+      bg: "bg-foreground/5",
+      border: "border-foreground/15",
+    },
+    {
+      label: "3rd",
+      color: "text-[#c47a3a]",
+      bg: "bg-[#c47a3a]/10",
+      border: "border-[#c47a3a]/30",
+    },
+  ];
 
   const stats = [
-    {
-      icon: Users,
-      label: "Total Users",
-      value: usersArr.length,
-      color: "text-primary",
-      sub: `${usersArr.filter((u) => u.globalRole === "employee").length} employees`,
-    },
-    {
-      icon: Building2,
-      label: "Departments",
-      value: deptsArr.length,
-      color: "text-[#47c8ff]",
-      sub: `${deptsArr.filter((d) => d.headId).length} with head`,
-    },
     {
       icon: FolderKanban,
       label: "Active Projects",
       value: activeProjects.length,
       color: "text-[#c847ff]",
-      sub: `${projectsArr.length} total`,
     },
     {
       icon: ClipboardList,
-      label: "Logs Today",
-      value: logsToday.length,
-      color: "text-[#e8a847]",
-      sub: `${usersArr.filter((u) => u.globalRole === "employee").length} total employees`,
+      label: "Open Tasks",
+      value: openTasks.length,
+      color: "text-[#47c8ff]",
     },
     {
       icon: Bug,
-      label: "ISSUES",
+      label: "Issues",
       value: openBugs.length,
       color: "text-[#ff4747]",
-      sub: `${criticalBugs.length} critical`,
+    },
+    {
+      icon: Clock,
+      label: "Logs Today",
+      value: todayLogs.length,
+      color: "text-[#e8a847]",
+    },
+    {
+      icon: Users,
+      label: "Departments",
+      value: depts.length,
+      color: "text-[#47ff8a]",
     },
   ];
 
@@ -232,10 +205,10 @@ export default function AdminDashboard() {
 
       {/* Stats Grid */}
       {dataLoading ? (
-        <StatsSkeleton />
+        <StatsSkeleton count={5} />
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          {stats.map(({ icon: Icon, label, value, color, sub }) => (
+          {stats.map(({ icon: Icon, label, value, color }) => (
             <div
               key={label}
               className="border border-outline bg-surface-low px-5 py-4"
@@ -247,218 +220,246 @@ export default function AdminDashboard() {
                 </span>
               </div>
               <p className={`text-2xl font-bold ${color}`}>{value}</p>
-              {sub && (
-                <p className="text-[10px] text-foreground-muted mt-1">{sub}</p>
-              )}
             </div>
           ))}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Projects */}
-        <div className="border border-outline bg-surface-low">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline">
-            <div className="flex items-center gap-2">
-              <FolderKanban className="w-4 h-4 text-[#c847ff]" />
-              <span className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
-                Active Projects
-              </span>
-            </div>
-            <button
-              onClick={() => router.push("/admin/projects")}
-              className="flex items-center gap-1 text-[10px] tracking-[0.1em] uppercase text-foreground-muted hover:text-primary transition-colors"
-            >
-              View All <ArrowRight className="w-3 h-3" />
-            </button>
-          </div>
-          <div className="divide-y divide-outline">
-            {activeProjects.slice(0, 4).map((p) => (
-              <div
-                key={p._id}
-                className="flex items-center justify-between px-5 py-3 hover:bg-surface-container transition-colors"
-              >
-                <p className="text-[12px] text-foreground font-medium">
-                  {p.name}
-                </p>
-                <StatusBadge status={p.status} />
-              </div>
-            ))}
-            {activeProjects.length === 0 && (
-              <div className="flex items-center justify-center py-8 text-foreground-muted">
-                <p className="text-[11px] tracking-[0.1em] uppercase">
-                  No active projects
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Departments */}
-        <div className="border border-outline bg-surface-low">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline">
-            <div className="flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-[#47c8ff]" />
-              <span className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
-                Departments
-              </span>
-            </div>
-            <button
-              onClick={() => router.push("/admin/departments")}
-              className="flex items-center gap-1 text-[10px] tracking-[0.1em] uppercase text-foreground-muted hover:text-primary transition-colors"
-            >
-              Manage <ArrowRight className="w-3 h-3" />
-            </button>
-          </div>
-          <div className="divide-y divide-outline">
-            {deptsArr.slice(0, 5).map((d) => (
-              <div
-                key={d._id}
-                className="flex items-center justify-between px-5 py-3 hover:bg-surface-container transition-colors"
-              >
-                <p className="text-[12px] text-foreground font-medium">
-                  {(d.departmentName || d.name || "").toUpperCase()}
-                </p>
-                <span className="text-[11px] text-foreground-muted">
-                  {d.employeeCount || 0} members
+      {/* Main layout: two independent column stacks */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* ── Left column: Recent Projects + Top Performers ── */}
+        <div className="flex-1 flex flex-col gap-6">
+          {/* Recent Projects */}
+          <div className="border border-outline bg-surface-low">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline">
+              <div className="flex items-center gap-2">
+                <FolderKanban className="w-4 h-4 text-[#c847ff]" />
+                <span className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
+                  Active Projects
                 </span>
               </div>
-            ))}
-            {deptsArr.length === 0 && (
-              <div className="flex items-center justify-center py-8 text-foreground-muted">
-                <p className="text-[11px] tracking-[0.1em] uppercase">
-                  No departments yet
-                </p>
+              <button
+                onClick={() => router.push("/admin/projects")}
+                className="flex items-center gap-1 text-[10px] tracking-[0.1em] uppercase text-foreground-muted hover:text-primary transition-colors"
+              >
+                View All <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="divide-y divide-outline">
+              {activeProjects.length === 0 ? (
+                <div className="flex items-center justify-center py-8 text-foreground-muted">
+                  <p className="text-[11px] tracking-[0.1em] uppercase">
+                    No active projects
+                  </p>
+                </div>
+              ) : (
+                activeProjects.slice(0, 4).map((p, idx) => (
+                  <div
+                    key={p._id ?? p.id ?? idx}
+                    className="flex items-center justify-between px-5 py-3 hover:bg-surface-container transition-colors"
+                  >
+                    <p className="text-[12px] text-foreground font-medium">
+                      {p.name}
+                    </p>
+                    <StatusBadge status={p.status} />
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Top Performers */}
+          <div className="border border-outline bg-surface-low">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-[#e8a847]" />
+                <span className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
+                  Top Performers
+                </span>
               </div>
-            )}
+              <button
+                onClick={() => router.push("/admin/leaderboard")}
+                className="flex items-center gap-1 text-[10px] tracking-[0.1em] uppercase text-foreground-muted hover:text-primary transition-colors"
+              >
+                Leaderboard <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="divide-y divide-outline">
+              {leaderboard.length === 0 ? (
+                <div className="flex items-center justify-center py-8 text-foreground-muted">
+                  <p className="text-[11px] tracking-[0.1em] uppercase">
+                    No data yet
+                  </p>
+                </div>
+              ) : (
+                leaderboard.slice(0, 5).map((emp, i) => {
+                  const m = medals[i] || medals[2];
+                  return (
+                    <div
+                      key={emp._id ?? emp.id ?? i}
+                      className="flex items-center gap-4 px-5 py-3 hover:bg-surface-container transition-colors"
+                    >
+                      <span
+                        className={`text-[11px] font-bold tracking-widest uppercase px-2 py-0.5 border ${m.color} ${m.bg} ${m.border}`}
+                      >
+                        {m.label}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] text-foreground font-medium truncate">
+                          {emp.name}
+                        </p>
+                        <p className="text-[10px] text-foreground-muted mt-0.5">
+                          {emp.score ?? 0} pts
+                        </p>
+                      </div>
+                      <span className={`text-lg font-bold ${m.color}`}>
+                        {emp.score ?? 0}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Employee Scoreboard — overall top 3 performers */}
-        <div className="border border-outline bg-surface-low">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline">
-            <div className="flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-[#e8a847]" />
-              <span className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
-                Top Performers
-              </span>
-            </div>
-            <button
-              onClick={() => router.push("/admin/daily-logs")}
-              className="flex items-center gap-1 text-[10px] tracking-[0.1em] uppercase text-foreground-muted hover:text-primary transition-colors"
-            >
-              All Logs <ArrowRight className="w-3 h-3" />
-            </button>
-          </div>
-          <div className="divide-y divide-outline">
-            {topOverall.length === 0 ? (
-              <div className="flex items-center justify-center py-8 text-foreground-muted">
-                <p className="text-[11px] tracking-[0.1em] uppercase">
-                  No data yet
-                </p>
+        {/* ── Right column: Departments + Issues + Tasks ── */}
+        <div className="flex-1 flex flex-col gap-6">
+          {/* Departments */}
+          <div className="border border-outline bg-surface-low">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-[#47c8ff]" />
+                <span className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
+                  Departments
+                </span>
               </div>
-            ) : (
-              topOverall.map((emp, i) => {
-                const medals = [
-                  {
-                    label: "1st",
-                    color: "text-[#e8a847]",
-                    bg: "bg-[#e8a847]/10",
-                    border: "border-[#e8a847]/30",
-                  },
-                  {
-                    label: "2nd",
-                    color: "text-foreground-muted",
-                    bg: "bg-foreground/5",
-                    border: "border-foreground/15",
-                  },
-                  {
-                    label: "3rd",
-                    color: "text-[#c47a3a]",
-                    bg: "bg-[#c47a3a]/10",
-                    border: "border-[#c47a3a]/30",
-                  },
-                ];
-                const m = medals[i] || medals[2];
-                return (
+              <button
+                onClick={() => router.push("/admin/departments")}
+                className="flex items-center gap-1 text-[10px] tracking-[0.1em] uppercase text-foreground-muted hover:text-primary transition-colors"
+              >
+                Manage <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="divide-y divide-outline">
+              {depts.length === 0 ? (
+                <div className="flex items-center justify-center py-8 text-foreground-muted">
+                  <p className="text-[11px] tracking-[0.1em] uppercase">
+                    No departments yet
+                  </p>
+                </div>
+              ) : (
+                depts.slice(0, 5).map((d, idx) => (
                   <div
-                    key={emp._id}
-                    className="flex items-center gap-4 px-5 py-3 hover:bg-surface-container transition-colors"
+                    key={d._id ?? d.id ?? idx}
+                    className="flex items-center justify-between px-5 py-3 hover:bg-surface-container transition-colors"
                   >
-                    <span
-                      className={`text-[11px] font-bold tracking-widest uppercase px-2 py-0.5 border ${m.color} ${m.bg} ${m.border}`}
-                    >
-                      {m.label}
+                    <p className="text-[12px] text-foreground font-medium">
+                      {(d.departmentName || d.name || "").toUpperCase()}
+                    </p>
+                    <span className="text-[11px] text-foreground-muted">
+                      {d.employeeCount ?? 0} members
                     </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] text-foreground font-medium truncate">
-                        {emp.name}
-                      </p>
-                      <p className="text-[10px] text-foreground-muted mt-0.5">
-                        {emp.score} pts
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Critical Bugs / Issues */}
+          <div className="border border-outline bg-surface-low">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline">
+              <div className="flex items-center gap-2">
+                <Bug className="w-4 h-4 text-[#ff4747]" />
+                <span className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
+                  ISSUES
+                </span>
+              </div>
+              <button
+                onClick={() => router.push("/admin/bugs")}
+                className="flex items-center gap-1 text-[10px] tracking-[0.1em] uppercase text-foreground-muted hover:text-primary transition-colors"
+              >
+                Issues <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="divide-y divide-outline">
+              {openBugs.length === 0 ? (
+                <div className="flex items-center justify-center gap-2 py-8 text-[#47ff8a]">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <p className="text-[11px] tracking-[0.1em] uppercase">
+                    NO ISSUES !
+                  </p>
+                </div>
+              ) : (
+                openBugs.slice(0, 4).map((b, idx) => {
+                  const proj = projects.find((p) => p._id === b.projectId);
+                  return (
+                    <div
+                      key={b._id ?? b.id ?? idx}
+                      className="flex items-center justify-between px-5 py-3 hover:bg-surface-container transition-colors"
+                    >
+                      <div>
+                        <p className="text-[12px] text-foreground">{b.title}</p>
+                        <p className="text-[11px] text-foreground-muted">
+                          {proj?.name || b.projectId}
+                        </p>
+                      </div>
+                      <span
+                        className={`text-[10px] tracking-[0.1em] uppercase font-bold px-2 py-0.5 border ${b.severity === "CRITICAL" ? "text-[#ff4747] border-[#ff4747]/30 bg-[#ff4747]/10" : b.severity === "HIGH" ? "text-[#e8a847] border-[#e8a847]/30 bg-[#e8a847]/10" : "text-foreground-muted border-foreground/15 bg-foreground/10"}`}
+                      >
+                        {b.severity}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Task List */}
+          <div className="border border-outline bg-surface-low">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline">
+              <div className="flex items-center gap-2">
+                <ClipboardList className="w-4 h-4 text-[#c847ff]" />
+                <span className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
+                  Tasks
+                </span>
+              </div>
+              <button
+                onClick={() => router.push("/admin/tasks")}
+                className="flex items-center gap-1 text-[10px] tracking-[0.1em] uppercase text-foreground-muted hover:text-primary transition-colors"
+              >
+                View All <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="divide-y divide-outline">
+              {openTasks.length === 0 ? (
+                <div className="flex items-center justify-center py-8 text-foreground-muted">
+                  <p className="text-[11px] tracking-[0.1em] uppercase">
+                    No open tasks
+                  </p>
+                </div>
+              ) : (
+                openTasks.slice(0, 6).map((t, idx) => (
+                  <div
+                    key={t._id ?? t.id ?? idx}
+                    className="flex items-center justify-between px-5 py-3 hover:bg-surface-container transition-colors"
+                  >
+                    <div>
+                      <p className="text-[12px] text-foreground">{t.title}</p>
+                      <p className="text-[11px] text-foreground-muted">
+                        {t.projectName || t.projectId}
                       </p>
                     </div>
-                    <span className={`text-lg font-bold ${m.color}`}>
-                      {emp.score}
+                    <span
+                      className={`text-[10px] tracking-[0.1em] uppercase font-bold px-2 py-0.5 border ${t.priority === "HIGH" ? "text-[#ff4747] border-[#ff4747]/30 bg-[#ff4747]/10" : t.priority === "MEDIUM" ? "text-[#47c8ff] border-[#47c8ff]/30 bg-[#47c8ff]/10" : "text-foreground-muted border-foreground/15 bg-foreground/10"}`}
+                    >
+                      {t.status}
                     </span>
                   </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        {/* Critical Bugs */}
-        <div className="border border-outline bg-surface-low">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline">
-            <div className="flex items-center gap-2">
-              <Bug className="w-4 h-4 text-[#ff4747]" />
-              <span className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
-                ISSUES
-              </span>
+                ))
+              )}
             </div>
-            <button
-              onClick={() => router.push("/admin/projects")}
-              className="flex items-center gap-1 text-[10px] tracking-[0.1em] uppercase text-foreground-muted hover:text-primary transition-colors"
-            >
-              Projects <ArrowRight className="w-3 h-3" />
-            </button>
-          </div>
-          <div className="divide-y divide-outline">
-            {openBugs.slice(0, 4).map((b) => {
-              const proj = projectsArr.find((p) => p._id === b.projectId);
-              return (
-                <div
-                  key={b._id}
-                  className="flex items-center justify-between px-5 py-3 hover:bg-surface-container transition-colors"
-                >
-                  <div>
-                    <p className="text-[12px] text-foreground">{b.title}</p>
-                    <p className="text-[11px] text-foreground-muted">
-                      {proj?.name || b.projectId}
-                    </p>
-                  </div>
-                  <span
-                    className={`text-[10px] tracking-[0.1em] uppercase font-bold px-2 py-0.5 border ${b.severity === "CRITICAL"
-                      ? "text-[#ff4747] border-[#ff4747]/30 bg-[#ff4747]/10"
-                      : b.severity === "HIGH"
-                        ? "text-[#e8a847] border-[#e8a847]/30 bg-[#e8a847]/10"
-                        : "text-foreground-muted border-foreground/15 bg-foreground/10"
-                      }`}
-                  >
-                    {b.severity}
-                  </span>
-                </div>
-              );
-            })}
-            {openBugs.length === 0 && (
-              <div className="flex items-center justify-center gap-2 py-8 text-[#47ff8a]">
-                <CheckCircle2 className="w-4 h-4" />
-                <p className="text-[11px] tracking-[0.1em] uppercase">
-                  NO ISSUES !
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </div>

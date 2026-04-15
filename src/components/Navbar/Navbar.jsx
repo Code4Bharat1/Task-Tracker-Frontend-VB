@@ -1,7 +1,7 @@
 "use client";
-import React from 'react';
-import ToggleTheme from '@/UI/ToggleTheme.jsx';
-import Link from 'next/link'
+import React from "react";
+import ToggleTheme from "@/UI/ToggleTheme.jsx";
+import Link from "next/link";
 
 const Navbar = () => {
   return (
@@ -19,7 +19,7 @@ const Navbar = () => {
         </Link>
       </div>
     </nav>
-  )
-}
+  );
+};
 
-export default Navbar
+export default Navbar;

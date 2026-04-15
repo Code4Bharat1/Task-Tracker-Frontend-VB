@@ -51,49 +51,17 @@ const DEPARTMENTS = [
   "Finance",
 ];
 
-// Project lifecycle from SRS section 8
-const STATUSES = [
-  "PLANNING",
-  "IN_PROGRESS",
-  "CODE_REVIEW",
-  "QA_TESTING",
-  "APPROVED",
-  "DEPLOYED",
-];
+const STATUSES = ["IN_PROGRESS", "COMPLETED"];
 
 const STATUS_META = {
-  PLANNING: {
-    label: "Planning",
-    color: "text-foreground-muted",
-    bg: "bg-foreground/5",
-    border: "border-foreground/10",
-  },
   IN_PROGRESS: {
     label: "In Progress",
     color: "text-[#47c8ff]",
     bg: "bg-[#47c8ff]/10",
     border: "border-[#47c8ff]/20",
   },
-  CODE_REVIEW: {
-    label: "Code Review",
-    color: "text-[#e8a847]",
-    bg: "bg-[#e8a847]/10",
-    border: "border-[#e8a847]/20",
-  },
-  QA_TESTING: {
-    label: "QA Testing",
-    color: "text-[#c847ff]",
-    bg: "bg-[#c847ff]/10",
-    border: "border-[#c847ff]/20",
-  },
-  APPROVED: {
-    label: "Approved",
-    color: "text-primary",
-    bg: "bg-primary/10",
-    border: "border-primary/20",
-  },
-  DEPLOYED: {
-    label: "Deployed",
+  COMPLETED: {
+    label: "Completed",
     color: "text-[#47ff8a]",
     bg: "bg-[#47ff8a]/10",
     border: "border-[#47ff8a]/20",
@@ -107,7 +75,7 @@ const EMPTY_FORM = {
   managerId: null,
   tester: "",
   testerId: null,
-  status: "PLANNING",
+  status: "IN_PROGRESS",
   deadline: "",
 };
 
@@ -127,7 +95,7 @@ function progressPct(completed, total) {
 }
 
 function StatusBadge({ status }) {
-  const m = STATUS_META[status] || STATUS_META.PLANNING;
+  const m = STATUS_META[status] || STATUS_META.IN_PROGRESS;
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] tracking-[0.1em] uppercase font-bold border ${m.bg} ${m.border} ${m.color}`}
@@ -155,15 +123,15 @@ function ProjectModal({ mode, initial, onClose, onSave, saving }) {
   const [form, setForm] = useState(
     initial
       ? {
-        name: initial.name,
-        department: initial.department,
-        manager: initial.manager,
-        managerId: initial.managerId,
-        tester: initial.tester,
-        testerId: initial.testerId ?? null,
-        status: initial.status,
-        deadline: initial.deadline,
-      }
+          name: initial.name,
+          department: initial.department,
+          manager: initial.manager,
+          managerId: initial.managerId,
+          tester: initial.tester,
+          testerId: initial.testerId ?? null,
+          status: initial.status,
+          deadline: initial.deadline,
+        }
       : EMPTY_FORM,
   );
   const [errors, setErrors] = useState({});
@@ -188,8 +156,8 @@ function ProjectModal({ mode, initial, onClose, onSave, saving }) {
         if (!mounted) return;
         setEmployees(u || []);
       })
-      .catch(() => { })
-      .finally(() => { });
+      .catch(() => {})
+      .finally(() => {});
     return () => {
       mounted = false;
     };
@@ -425,9 +393,14 @@ function MembersDrawer({ project, onClose }) {
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    function handleKey(e) { if (e.key === "Escape") onClose(); }
+    function handleKey(e) {
+      if (e.key === "Escape") onClose();
+    }
     window.addEventListener("keydown", handleKey);
-    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", handleKey); };
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKey);
+    };
   }, [onClose]);
 
   useEffect(() => {
@@ -440,7 +413,10 @@ function MembersDrawer({ project, onClose }) {
     getAllBugs({ projectId })
       .then((result) => setBugs(Array.isArray(result) ? result : []))
       .catch((err) => {
-        console.error("Failed to load bugs:", err?.response?.data || err?.message);
+        console.error(
+          "Failed to load bugs:",
+          err?.response?.data || err?.message,
+        );
         setBugs([]);
       })
       .finally(() => setBugsLoading(false));
@@ -448,10 +424,26 @@ function MembersDrawer({ project, onClose }) {
   }, [project?._id ?? project?.id]);
 
   const SEVERITY_COLOR = {
-    LOW: { text: "text-[#47c8ff]", border: "border-[#47c8ff]/40", bg: "bg-[#47c8ff]/10" },
-    MEDIUM: { text: "text-[#e8a847]", border: "border-[#e8a847]/40", bg: "bg-[#e8a847]/10" },
-    HIGH: { text: "text-[#f87343]", border: "border-[#f87343]/40", bg: "bg-[#f87343]/10" },
-    CRITICAL: { text: "text-[#ff4747]", border: "border-[#ff4747]/40", bg: "bg-[#ff4747]/10" },
+    LOW: {
+      text: "text-[#47c8ff]",
+      border: "border-[#47c8ff]/40",
+      bg: "bg-[#47c8ff]/10",
+    },
+    MEDIUM: {
+      text: "text-[#e8a847]",
+      border: "border-[#e8a847]/40",
+      bg: "bg-[#e8a847]/10",
+    },
+    HIGH: {
+      text: "text-[#f87343]",
+      border: "border-[#f87343]/40",
+      bg: "bg-[#f87343]/10",
+    },
+    CRITICAL: {
+      text: "text-[#ff4747]",
+      border: "border-[#ff4747]/40",
+      bg: "bg-[#ff4747]/10",
+    },
   };
   const STATUS_COLOR = {
     OPEN: "text-[#ff4747]",
@@ -463,55 +455,80 @@ function MembersDrawer({ project, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
       <div className="relative w-full max-w-4xl bg-surface-low border border-outline flex flex-col shadow-2xl max-h-[88vh]">
-
         {/* Header */}
         <div className="px-6 py-4 border-b border-outline flex items-center justify-between">
           <div>
-            <button onClick={onClose} className="flex items-center gap-2 text-foreground-muted hover:text-foreground transition-colors mb-2">
+            <button
+              onClick={onClose}
+              className="flex items-center gap-2 text-foreground-muted hover:text-foreground transition-colors mb-2"
+            >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span className="text-[10px] tracking-[0.15em] uppercase">Back</span>
+              <span className="text-[10px] tracking-[0.15em] uppercase">
+                Back
+              </span>
             </button>
-            <h2 className="text-[14px] font-bold text-foreground tracking-wide">{project.name}</h2>
-            <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted mt-0.5">{project.department}</p>
+            <h2 className="text-[14px] font-bold text-foreground tracking-wide">
+              {project.name}
+            </h2>
+            <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted mt-0.5">
+              {project.department}
+            </p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted">Bugs</p>
-            <p className="text-2xl font-extrabold text-[#ff4747]">{bugsLoading ? "…" : bugs.length}</p>
+            <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted">
+              Issues
+            </p>
+            <p className="text-2xl font-extrabold text-[#ff4747]">
+              {bugsLoading ? "…" : bugs.length}
+            </p>
           </div>
         </div>
 
         {/* Two-column body */}
         <div className="flex-1 overflow-hidden flex min-h-0">
-
           {/* ── Left: Project Details ── */}
           <div className="w-[45%] border-r border-outline overflow-y-auto p-6 space-y-5 scrollbar-thin">
-
             {/* Manager */}
             <div>
-              <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted mb-2">Project Manager</p>
+              <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted mb-2">
+                Project Manager
+              </p>
               <div className="flex items-center gap-3 px-3 py-2.5 border border-outline bg-surface-container">
                 <div className="w-7 h-7 bg-primary/10 border border-primary/30 flex items-center justify-center text-[11px] font-bold text-primary shrink-0">
                   {project.manager?.charAt(0) || "?"}
                 </div>
                 <div>
-                  <p className="text-[12px] font-bold text-foreground">{project.manager || "Unassigned"}</p>
-                  <p className="text-[10px] uppercase tracking-wider text-foreground-muted">Project Manager</p>
+                  <p className="text-[12px] font-bold text-foreground">
+                    {project.manager || "Unassigned"}
+                  </p>
+                  <p className="text-[10px] uppercase tracking-wider text-foreground-muted">
+                    Project Manager
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Tester */}
             <div>
-              <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted mb-2">Tester</p>
+              <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted mb-2">
+                Tester
+              </p>
               <div className="flex items-center gap-3 px-3 py-2.5 border border-outline bg-surface-container">
                 <div className="w-7 h-7 bg-[#c847ff]/10 border border-[#c847ff]/30 flex items-center justify-center text-[11px] font-bold text-[#c847ff] shrink-0">
                   {project.tester?.charAt(0) || "?"}
                 </div>
                 <div>
-                  <p className="text-[12px] font-bold text-foreground">{project.tester || "Unassigned"}</p>
-                  <p className="text-[10px] uppercase tracking-wider text-foreground-muted">Tester</p>
+                  <p className="text-[12px] font-bold text-foreground">
+                    {project.tester || "Unassigned"}
+                  </p>
+                  <p className="text-[10px] uppercase tracking-wider text-foreground-muted">
+                    Tester
+                  </p>
                 </div>
               </div>
             </div>
@@ -522,32 +539,54 @@ function MembersDrawer({ project, onClose }) {
                 Developers ({project.members?.length || 0})
               </p>
               <div className="space-y-1.5">
-                {project.members?.length > 0 ? project.members.map((name, i) => (
-                  <div key={i} className="flex items-center gap-3 px-3 py-2.5 border border-outline bg-surface-container">
-                    <div className="w-7 h-7 bg-[#47c8ff]/10 border border-[#47c8ff]/30 flex items-center justify-center text-[11px] font-bold text-[#47c8ff] shrink-0">
-                      {name.charAt(0)}
+                {project.members?.length > 0 ? (
+                  project.members.map((name, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 px-3 py-2.5 border border-outline bg-surface-container"
+                    >
+                      <div className="w-7 h-7 bg-[#47c8ff]/10 border border-[#47c8ff]/30 flex items-center justify-center text-[11px] font-bold text-[#47c8ff] shrink-0">
+                        {name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-[12px] font-bold text-foreground">
+                          {name}
+                        </p>
+                        <p className="text-[10px] uppercase tracking-wider text-foreground-muted">
+                          Developer
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-[12px] font-bold text-foreground">{name}</p>
-                      <p className="text-[10px] uppercase tracking-wider text-foreground-muted">Developer</p>
-                    </div>
-                  </div>
-                )) : (
-                  <p className="text-[11px] text-foreground-muted italic">No developers assigned</p>
+                  ))
+                ) : (
+                  <p className="text-[11px] text-foreground-muted italic">
+                    No developers assigned
+                  </p>
                 )}
               </div>
             </div>
 
             {/* Module Progress */}
             <div>
-              <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted mb-2">Module Progress</p>
+              <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted mb-2">
+                Module Progress
+              </p>
               <div className="border border-outline bg-surface-container px-4 py-3">
                 <div className="flex justify-between mb-2">
-                  <span className="text-[11px] text-foreground-muted">{project.modulesCompleted} / {project.modules} completed</span>
-                  <span className="text-[11px] font-bold text-primary">{progressPct(project.modulesCompleted, project.modules)}%</span>
+                  <span className="text-[11px] text-foreground-muted">
+                    {project.modulesCompleted} / {project.modules} completed
+                  </span>
+                  <span className="text-[11px] font-bold text-primary">
+                    {progressPct(project.modulesCompleted, project.modules)}%
+                  </span>
                 </div>
                 <div className="w-full h-1 bg-surface-highest">
-                  <div className="h-full bg-primary transition-all" style={{ width: `${progressPct(project.modulesCompleted, project.modules)}%` }} />
+                  <div
+                    className="h-full bg-primary transition-all"
+                    style={{
+                      width: `${progressPct(project.modulesCompleted, project.modules)}%`,
+                    }}
+                  />
                 </div>
               </div>
             </div>
@@ -556,51 +595,77 @@ function MembersDrawer({ project, onClose }) {
           {/* ── Right: Bugs ── */}
           <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
             <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted mb-4">
-              Bug Reports ({bugsLoading ? "…" : bugs.length})
+              Issue Reports ({bugsLoading ? "…" : bugs.length})
             </p>
 
             {bugsLoading ? (
-              <div className="flex items-center justify-center py-12 text-foreground-muted text-[12px]">Loading bugs…</div>
+              <div className="flex items-center justify-center py-12 text-foreground-muted text-[12px]">
+                Loading issues…
+              </div>
             ) : bugs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 gap-2 text-foreground-muted">
-                <p className="text-[12px] tracking-[0.1em] uppercase">No bugs reported</p>
+                <p className="text-[12px] tracking-[0.1em] uppercase">
+                  No issues reported
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
                 {bugs.map((bug) => {
-                  const sev = SEVERITY_COLOR[bug.severity] || { text: "text-foreground-muted", border: "border-outline", bg: "bg-surface-container" };
-                  const statusCls = STATUS_COLOR[bug.status] || "text-foreground-muted";
+                  const sev = SEVERITY_COLOR[bug.severity] || {
+                    text: "text-foreground-muted",
+                    border: "border-outline",
+                    bg: "bg-surface-container",
+                  };
+                  const statusCls =
+                    STATUS_COLOR[bug.status] || "text-foreground-muted";
                   return (
-                    <div key={bug._id} className="border border-outline bg-surface-container p-4 space-y-3">
+                    <div
+                      key={bug._id}
+                      className="border border-outline bg-surface-container p-4 space-y-3"
+                    >
                       {/* Title + status */}
                       <div className="flex items-start justify-between gap-3">
-                        <p className="text-[12px] font-bold text-foreground leading-snug flex-1">{bug.title}</p>
-                        <span className={`text-[10px] font-bold uppercase tracking-wider shrink-0 ${statusCls}`}>{bug.status?.replace("_", " ")}</span>
+                        <p className="text-[12px] font-bold text-foreground leading-snug flex-1">
+                          {bug.title}
+                        </p>
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider shrink-0 ${statusCls}`}
+                        >
+                          {bug.status?.replace("_", " ")}
+                        </span>
                       </div>
                       {/* Meta row */}
                       <div className="flex flex-wrap items-center gap-3">
                         {/* Severity */}
-                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border ${sev.text} ${sev.border} ${sev.bg}`}>
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border ${sev.text} ${sev.border} ${sev.bg}`}
+                        >
                           {bug.severity}
                         </span>
                         {/* Assigned by */}
                         {bug.reportedByName && (
                           <span className="text-[11px] text-foreground-muted">
-                            <span className="text-foreground-muted/60 uppercase tracking-wider text-[10px]">By </span>
+                            <span className="text-foreground-muted/60 uppercase tracking-wider text-[10px]">
+                              By{" "}
+                            </span>
                             {bug.reportedByName}
                           </span>
                         )}
                         {/* Assigned to */}
                         {bug.assignedToName && (
                           <span className="text-[11px] text-foreground-muted">
-                            <span className="text-foreground-muted/60 uppercase tracking-wider text-[10px]">To </span>
+                            <span className="text-foreground-muted/60 uppercase tracking-wider text-[10px]">
+                              To{" "}
+                            </span>
                             {bug.assignedToName}
                           </span>
                         )}
                       </div>
                       {/* Description */}
                       {bug.description && (
-                        <p className="text-[11px] text-foreground-muted leading-relaxed line-clamp-2">{bug.description}</p>
+                        <p className="text-[11px] text-foreground-muted leading-relaxed line-clamp-2">
+                          {bug.description}
+                        </p>
                       )}
                     </div>
                   );
@@ -722,7 +787,7 @@ export default function ProjectsOverview() {
           const members = p.developerNames || p.members || [];
           const modules = p.modulesTotal ?? p.modules ?? 0;
           const modulesCompleted = p.modulesCompleted ?? 0;
-          const status = p.status ?? "PLANNING";
+          const status = p.status ?? "IN_PROGRESS";
           const deadline = p.deadline ?? p.deadlineAt ?? null;
           const created = p.created_at ?? p.createdAt ?? p.created;
           return {
@@ -808,7 +873,7 @@ export default function ProjectsOverview() {
       const members = created?.developerNames || created?.members || [];
       const modules = created?.modulesTotal ?? created?.modules ?? 0;
       const modulesCompleted = created?.modulesCompleted ?? 0;
-      const status = created?.status ?? "PLANNING";
+      const status = created?.status ?? "IN_PROGRESS";
       const deadline = created?.deadline ?? null;
       const mapped = {
         id,
@@ -865,7 +930,7 @@ export default function ProjectsOverview() {
       const members = updated?.developerNames || updated?.members || [];
       const modules = updated?.modulesTotal ?? updated?.modules ?? 0;
       const modulesCompleted = updated?.modulesCompleted ?? 0;
-      const status = updated?.status ?? "PLANNING";
+      const status = updated?.status ?? "IN_PROGRESS";
       const deadline = updated?.deadline ?? null;
       const mapped = {
         id: id,
@@ -917,12 +982,8 @@ export default function ProjectsOverview() {
       value: projects.filter((p) => p.status === "IN_PROGRESS").length,
     },
     {
-      label: "In Testing",
-      value: projects.filter((p) => p.status === "QA_TESTING").length,
-    },
-    {
-      label: "Deployed",
-      value: projects.filter((p) => p.status === "DEPLOYED").length,
+      label: "Completed",
+      value: projects.filter((p) => p.status === "COMPLETED").length,
     },
   ];
 

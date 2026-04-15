@@ -18,41 +18,19 @@ import { DashboardSkeleton } from "@/components/skeletons";
 import { getProjects } from "@/services/projectService";
 import { getAllLogs } from "@/services/dailyLogService";
 import { getAllBugs } from "@/services/bugService";
+import { getTasks } from "@/services/taskService";
+import { getLeaderboard } from "@/services/userService";
 
 // ─── Status Meta ─────────────────────────────────────────────
 const STATUS_META = {
-  PLANNING: {
-    label: "Planning",
-    color: "text-foreground-muted",
-    bg: "bg-foreground/5",
-    border: "border-foreground/10",
-  },
   IN_PROGRESS: {
     label: "In Progress",
     color: "text-[#47c8ff]",
     bg: "bg-[#47c8ff]/10",
     border: "border-[#47c8ff]/20",
   },
-  CODE_REVIEW: {
-    label: "Code Review",
-    color: "text-[#e8a847]",
-    bg: "bg-[#e8a847]/10",
-    border: "border-[#e8a847]/20",
-  },
-  QA_TESTING: {
-    label: "QA Testing",
-    color: "text-[#c847ff]",
-    bg: "bg-[#c847ff]/10",
-    border: "border-[#c847ff]/20",
-  },
-  APPROVED: {
-    label: "Approved",
-    color: "text-primary",
-    bg: "bg-primary/10",
-    border: "border-primary/20",
-  },
-  DEPLOYED: {
-    label: "Deployed",
+  COMPLETED: {
+    label: "Completed",
     color: "text-[#47ff8a]",
     bg: "bg-[#47ff8a]/10",
     border: "border-[#47ff8a]/20",
@@ -60,7 +38,7 @@ const STATUS_META = {
 };
 
 function StatusBadge({ status }) {
-  const m = STATUS_META[status] || STATUS_META.PLANNING;
+  const m = STATUS_META[status] || STATUS_META.IN_PROGRESS;
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] tracking-[0.1em] uppercase font-bold border ${m.bg} ${m.border} ${m.color}`}
@@ -82,6 +60,22 @@ function formatDate(d) {
     month: "short",
     day: "numeric",
   });
+}
+
+function getLogDate(log) {
+  if (!log) return null;
+  const tryParse = (v) => {
+    if (!v) return null;
+    const d = new Date(v);
+    return isNaN(d) ? null : d;
+  };
+  return (
+    tryParse(log.logDate) ||
+    tryParse(log.date) ||
+    tryParse(log.createdAt) ||
+    tryParse(log.created_at) ||
+    null
+  );
 }
 
 function StatCard({ label, value, sub, icon: Icon, accent }) {
@@ -109,6 +103,8 @@ export default function DeptHeadDashboard() {
   const [projects, setProjects] = useState([]);
   const [logs, setLogs] = useState([]);
   const [bugs, setBugs] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [projectStatuses, setProjectStatuses] = useState({});
 
@@ -120,14 +116,19 @@ export default function DeptHeadDashboard() {
 
   const loadData = useCallback(async () => {
     try {
-      const [pR, lR, bR] = await Promise.allSettled([
+      const [pR, lR, bR, tR, lbR] = await Promise.allSettled([
         getProjects(),
         getAllLogs(),
         getAllBugs(),
+        getTasks(),
+        getLeaderboard("all"),
       ]);
       setProjects(pR.status === "fulfilled" ? pR.value : []);
       setLogs(lR.status === "fulfilled" ? lR.value : []);
       setBugs(bR.status === "fulfilled" ? bR.value : []);
+      setTasks(tR.status === "fulfilled" ? tR.value : []);
+      const lb = lbR.status === "fulfilled" ? lbR.value : {};
+      setLeaderboard(lb.topOverall ?? lb.leaderboard ?? lb.data ?? []);
     } catch {
       /* show zeros */
     } finally {
@@ -151,16 +152,36 @@ export default function DeptHeadDashboard() {
   if (loading) return <DashboardSkeleton />;
 
   const activeProjects = (projects || []).filter(
-    (p) => p?.status !== "DEPLOYED",
+    (p) => p?.status !== "COMPLETED",
   );
-  const deployedProjects = (projects || []).filter(
-    (p) => p?.status === "DEPLOYED",
+  const completedProjects = (projects || []).filter(
+    (p) => p?.status === "COMPLETED",
   );
   const openBugs = (bugs || []).filter((b) =>
     ["OPEN", "REOPENED"].includes(b?.status),
   );
+  const openTasks = (tasks || []).filter((t) => t?.status !== "DONE");
   const today = new Date().toISOString().split("T")[0];
+  // logs in the last 7 days
   const todayLogs = (logs || []).filter((l) => l?.logDate === today);
+  const logsThisWeek = (logs || []).filter((l) => {
+    const d = getLogDate(l);
+    if (!d) return false;
+    const now = new Date();
+    const diffDays = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
+    return diffDays <= 7;
+  });
+  const topPerformer = (leaderboard && leaderboard.length) ? leaderboard[0] : null;
+  const recentLogs = [...(logs || [])]
+    .slice()
+    .sort((a, b) => {
+      const da = getLogDate(a);
+      const db = getLogDate(b);
+      const ta = da ? da.getTime() : 0;
+      const tb = db ? db.getTime() : 0;
+      return tb - ta;
+    })
+    .slice(0, 6);
   const recentProjects = [...(projects || [])]
     .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
     .slice(0, 5);
@@ -176,46 +197,42 @@ export default function DeptHeadDashboard() {
             Welcome back, {user.name?.split(" ")[0]}
           </h1>
         </div>
-        <p className="hidden sm:block text-[10px] tracking-[0.15em] uppercase text-foreground-muted">
-          {new Date().toLocaleDateString("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </p>
+        
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Active Projects"
-          value={activeProjects.length}
-          sub={`${deployedProjects.length} deployed`}
-          icon={FolderKanban}
-          accent="text-[#47c8ff]"
-        />
-        <StatCard
-          label="Open Bugs"
-          value={openBugs.length}
-          sub="Across all projects"
-          icon={AlertCircle}
-          accent="text-[#ff4747]"
-        />
-        <StatCard
-          label="Logs Today"
-          value={todayLogs.length}
-          sub="Work entries submitted"
-          icon={Clock}
-          accent="text-[#e8a847]"
-        />
-        <StatCard
-          label="Deployed"
-          value={deployedProjects.length}
-          sub="Projects completed"
-          icon={CheckCircle2}
-          accent="text-[#47ff8a]"
-        />
-      </div>
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <StatCard
+              label="Projects"
+              value={projects.length}
+              icon={FolderKanban}
+              accent="text-[#47c8ff]"
+            />
+            <StatCard
+              label="Tasks"
+              value={openTasks.length}
+              icon={CheckCircle2}
+              accent="text-[#47ff8a]"
+            />
+            <StatCard
+              label="Logs This Week"
+              value={logsThisWeek.length}
+              icon={Clock}
+              accent="text-[#e8a847]"
+            />
+            <StatCard
+              label="Issues"
+              value={openBugs.length}
+              icon={AlertCircle}
+              accent="text-[#ff4747]"
+            />
+            <StatCard
+              label="Top Performer"
+              value={topPerformer ? topPerformer.name : "—"}
+              sub={topPerformer ? `${topPerformer.score ?? 0} pts` : "No data"}
+              icon={Users}
+              accent="text-[#e8a847]"
+            />
+          </div>
 
       {/* Recent Projects */}
       <div className="border border-outline bg-surface-low">
@@ -299,12 +316,12 @@ export default function DeptHeadDashboard() {
         </div>
       </div>
 
-      {/* Open Bugs + Today's Logs */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      {/* Open Issues + Top Performers + Today's Logs */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="border border-outline bg-surface-low">
           <div className="flex items-center justify-between px-6 py-4 border-b border-outline">
             <span className="text-[11px] tracking-[0.2em] uppercase font-bold text-foreground">
-              Open Bugs
+              Open Issues
             </span>
             <span className="text-[10px] tracking-[0.1em] uppercase text-[#ff4747]">
               {openBugs.length} open
@@ -342,35 +359,73 @@ export default function DeptHeadDashboard() {
         <div className="border border-outline bg-surface-low">
           <div className="flex items-center justify-between px-6 py-4 border-b border-outline">
             <span className="text-[11px] tracking-[0.2em] uppercase font-bold text-foreground">
-              Today&apos;s Logs
+              Top Performers
             </span>
           </div>
           <div className="divide-y divide-outline">
-            {todayLogs.slice(0, 4).map((log) => (
-              <div
-                key={log._id}
-                className="px-6 py-3.5 flex items-center justify-between gap-3"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-5 h-5 bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                    <Users className="w-2.5 h-2.5 text-primary" />
+            {leaderboard && leaderboard.length ? (
+              leaderboard.slice(0, 5).map((emp, i) => {
+                const medals = [
+                  { label: "1st", color: "text-[#e8a847]", bg: "bg-[#e8a847]/10", border: "border-[#e8a847]/30" },
+                  { label: "2nd", color: "text-foreground-muted", bg: "bg-foreground/5", border: "border-foreground/15" },
+                  { label: "3rd", color: "text-[#c47a3a]", bg: "bg-[#c47a3a]/10", border: "border-[#c47a3a]/30" },
+                ];
+                const m = medals[i] || medals[2];
+                return (
+                  <div key={emp._id ?? emp.id ?? i} className="flex items-center gap-4 px-6 py-3 hover:bg-surface-container transition-colors">
+                    <span className={`text-[11px] font-bold tracking-widest uppercase px-2 py-0.5 border ${m.color} ${m.bg} ${m.border}`}>{m.label}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] text-foreground font-medium truncate">{emp.name}</p>
+                      <p className="text-[10px] text-foreground-muted mt-0.5">{emp.score ?? 0} pts</p>
+                    </div>
+                    <span className={`text-lg font-bold ${m.color}`}>{emp.score ?? 0}</span>
                   </div>
-                  <div>
-                    <p className="text-[12px] text-foreground font-medium">
-                      {log.userName}
-                    </p>
-                    <p className="text-[10px] text-foreground-muted">
-                      {log.projectName}
-                    </p>
+                );
+              })
+            ) : (
+              <div className="flex items-center justify-center py-8 text-foreground-muted">
+                <p className="text-[12px] tracking-[0.1em] uppercase">No data yet</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="border border-outline bg-surface-low">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-outline">
+            <span className="text-[11px] tracking-[0.2em] uppercase font-bold text-foreground">
+              Recent Logs
+            </span>
+          </div>
+          <div className="divide-y divide-outline">
+            {recentLogs.length ? (
+              recentLogs.map((log) => (
+                <div
+                  key={log._id ?? log.id}
+                  className="px-6 py-3.5 flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-5 h-5 bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                      <Users className="w-2.5 h-2.5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-[12px] text-foreground font-medium">
+                        {log.userName || log.user?.name || "—"}
+                      </p>
+                      <p className="text-[10px] text-foreground-muted">
+                        {log.projectName || log.project?.name || "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-foreground-muted">
+                    {getLogDate(log)
+                      ? getLogDate(log).toLocaleString()
+                      : "—"}
                   </div>
                 </div>
-              </div>
-            ))}
-            {todayLogs.length === 0 && (
+              ))
+            ) : (
               <div className="flex items-center justify-center py-8 text-foreground-muted">
-                <p className="text-[12px] tracking-[0.1em] uppercase">
-                  No logs today
-                </p>
+                <p className="text-[12px] tracking-[0.1em] uppercase">No logs yet</p>
               </div>
             )}
           </div>

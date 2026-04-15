@@ -543,7 +543,7 @@ export default function UserManagement() {
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => setModal({ type: "edit", user: u })}
-                      className="p-1.5 text-foreground-muted hover:text-foreground transition-colors"
+                      className="p-1.5 text-foreground-muted dark:hover:text-foreground hover:text-primary hover:bg-surface-container transition-colors"
                       title="Edit"
                     >
                       <Pencil className="w-3.5 h-3.5" />
@@ -656,7 +656,7 @@ export default function UserManagement() {
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => setModal({ type: "edit", user: u })}
-                        className="p-1.5 text-foreground-muted hover:text-foreground hover:bg-[#1a1a1a] transition-colors"
+                        className="p-1.5 text-foreground-muted dark:hover:text-foreground hover:text-primary hover:bg-surface-container transition-colors"
                         title="Edit"
                       >
                         <Pencil className="w-3.5 h-3.5" />

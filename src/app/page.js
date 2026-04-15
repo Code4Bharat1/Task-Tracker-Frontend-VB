@@ -6,7 +6,10 @@ import { getRedirectPath } from "@/lib/auth/utils";
 import AuthLoader from "@/components/AuthLoader";
 import Navbar from "@/components/Navbar/Navbar";
 import HeroSection from "@/components/Landing/HeroSection";
+import FeaturesSection from "@/components/Landing/FeaturesSection";
 import DashboardPanelsSection from "@/components/Landing/DashboardPanelsSection";
+import TestimonialsSection from "@/components/Landing/TestimonialsSection";
+import FAQSection from "@/components/Landing/FAQSection";
 
 export default function Home() {
   const router = useRouter();
@@ -21,12 +24,18 @@ export default function Home() {
     <div className="relative bg-surface">
       <div className="fixed inset-0 bg-dot-pattern pointer-events-none" />
       <Navbar />
-      {/* Hero — full viewport height, offset by fixed navbar */}
-      <div className="relative h-screen flex flex-col overflow-hidden pt-[65px]">
+      <div className="relative pt-[65px]">
+        {/* Hero — centered, full-width */}
         <HeroSection />
+        {/* Feature grid */}
+        <FeaturesSection />
+        {/* Role dashboards + lifecycle flow + comparison + benefits */}
+        <DashboardPanelsSection />
+        {/* Testimonials */}
+        <TestimonialsSection />
+        {/* FAQ */}
+        <FAQSection />
       </div>
-      {/* Sections below the fold */}
-      <DashboardPanelsSection />
     </div>
   );
 }

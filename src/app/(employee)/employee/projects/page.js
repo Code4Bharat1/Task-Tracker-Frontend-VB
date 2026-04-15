@@ -19,24 +19,12 @@ import { getMyProjects } from "@/services/projectService";
 
 // ─── Helpers ──────────────────────────────────────────────────
 const STATUS_META = {
-  PLANNING: {
-    label: "Planning",
-    color: "text-foreground-muted  border-foreground/15  bg-foreground/10",
-  },
   IN_PROGRESS: {
     label: "In Progress",
     color: "text-[#47c8ff] border-[#47c8ff]/30 bg-[#47c8ff]/10",
   },
-  CODE_REVIEW: {
-    label: "Code Review",
-    color: "text-[#c847ff] border-[#c847ff]/30 bg-[#c847ff]/10",
-  },
-  QA_TESTING: {
-    label: "QA Testing",
-    color: "text-[#e8a847] border-[#e8a847]/30 bg-[#e8a847]/10",
-  },
-  DEPLOYED: {
-    label: "Deployed",
+  COMPLETED: {
+    label: "Completed",
     color: "text-[#47ff8a] border-[#47ff8a]/30 bg-[#47ff8a]/10",
   },
 };

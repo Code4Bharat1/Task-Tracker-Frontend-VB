@@ -7,6 +7,8 @@ import {
   Users,
   Building2,
   FolderKanban,
+  Bug,
+  ClipboardList,
   Settings,
   LogOut,
   Shield,
@@ -42,6 +44,16 @@ const NAV_ITEMS = [
     label: "Projects Overview",
     icon: FolderKanban,
     href: "/admin/projects",
+  },
+  {
+    label: "Issues",
+    icon: Bug,
+    href: "/admin/bugs",
+  },
+  {
+    label: "Tasks",
+    icon: ClipboardList,
+    href: "/admin/tasks",
   },
   {
     label: "Daily Logs",

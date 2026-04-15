@@ -30,49 +30,19 @@ import { StatsSkeleton } from "@/components/skeletons";
 
 // ─── Color maps ────────────────────────────────────────────────
 const STATUS_COLOR = {
-  PLANNING: "text-foreground-muted  bg-foreground/10  border-foreground/10",
   IN_PROGRESS: "text-[#47c8ff] bg-[#47c8ff]/10 border-[#47c8ff]/20",
-  CODE_REVIEW: "text-[#c847ff] bg-[#c847ff]/10 border-[#c847ff]/20",
-  QA_TESTING: "text-[#e8a847] bg-[#e8a847]/10 border-[#e8a847]/20",
-  DEPLOYED: "text-[#47ff8a] bg-[#47ff8a]/10 border-[#47ff8a]/20",
-  TODO: "text-foreground-muted  bg-foreground/10  border-foreground/10",
-  DEV_COMPLETE: "text-primary bg-primary/10 border-primary/20",
-  APPROVED: "text-[#47ff8a] bg-[#47ff8a]/10 border-[#47ff8a]/20",
+  COMPLETED: "text-[#47ff8a] bg-[#47ff8a]/10 border-[#47ff8a]/20",
 };
 
 const PM_STATUS_META = {
-  PLANNING: {
-    label: "Planning",
-    color: "text-foreground-muted",
-    bg: "bg-foreground/5",
-    border: "border-foreground/10",
-  },
   IN_PROGRESS: {
     label: "In Progress",
     color: "text-[#47c8ff]",
     bg: "bg-[#47c8ff]/10",
     border: "border-[#47c8ff]/20",
   },
-  CODE_REVIEW: {
-    label: "Code Review",
-    color: "text-[#e8a847]",
-    bg: "bg-[#e8a847]/10",
-    border: "border-[#e8a847]/20",
-  },
-  QA_TESTING: {
-    label: "QA Testing",
-    color: "text-[#c847ff]",
-    bg: "bg-[#c847ff]/10",
-    border: "border-[#c847ff]/20",
-  },
-  APPROVED: {
-    label: "Approved",
-    color: "text-primary",
-    bg: "bg-primary/10",
-    border: "border-primary/20",
-  },
-  DEPLOYED: {
-    label: "Deployed",
+  COMPLETED: {
+    label: "Completed",
     color: "text-[#47ff8a]",
     bg: "bg-[#47ff8a]/10",
     border: "border-[#47ff8a]/20",
@@ -81,7 +51,7 @@ const PM_STATUS_META = {
 
 function StatusBadge({ status, usePM = false }) {
   if (usePM) {
-    const m = PM_STATUS_META[status] || PM_STATUS_META.PLANNING;
+    const m = PM_STATUS_META[status] || PM_STATUS_META.IN_PROGRESS;
     return (
       <span
         className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] tracking-widest uppercase font-bold border ${m.bg} ${m.border} ${m.color}`}
@@ -190,7 +160,7 @@ function PMDashboard({ user, router }) {
     loadData();
   }, [loadData]);
 
-  const activeProjects = projects.filter((p) => p.status !== "DEPLOYED");
+  const activeProjects = projects.filter((p) => p.status !== "COMPLETED");
   const pendingReview = allTasks.filter((t) => t.status === "IN_REVIEW");
   const openBugs = bugs.filter((b) => ["OPEN", "REOPENED"].includes(b.status));
 
@@ -215,7 +185,7 @@ function PMDashboard({ user, router }) {
     },
     {
       icon: Bug,
-      label: "Open Bugs",
+      label: "Open Issues",
       value: openBugs.length,
       color: openBugs.length > 0 ? "text-[#ff4747]" : "text-[#47ff8a]",
     },
@@ -492,7 +462,7 @@ function DeveloperDashboard({ user, router }) {
     },
     {
       icon: Bug,
-      label: "Open Bugs",
+      label: "Open Issues",
       value: openBugs.length,
       color: openBugs.length > 0 ? "text-[#ff4747]" : "text-[#47ff8a]",
     },
@@ -606,7 +576,7 @@ function DeveloperDashboard({ user, router }) {
             <div className="flex items-center gap-2">
               <Bug className="w-4 h-4 text-[#ff4747]" />
               <span className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
-                Open Bugs
+                Open Issues
               </span>
             </div>
             <button
@@ -642,7 +612,7 @@ function DeveloperDashboard({ user, router }) {
               <div className="flex items-center justify-center gap-2 py-8 text-[#47ff8a]">
                 <CheckCircle2 className="w-4 h-4" />
                 <p className="text-[11px] tracking-widest uppercase">
-                  No open bugs — great work!
+                  No open issues — great work!
                 </p>
               </div>
             )}
@@ -682,7 +652,7 @@ function TesterDashboard({ user, router }) {
     loadData();
   }, [loadData]);
 
-  const qaProjects = projects.filter((p) => p.status === "QA_TESTING");
+  const inProgressProjects = projects.filter((p) => p.status === "IN_PROGRESS");
   const openBugs = bugs.filter((b) =>
     ["OPEN", "REOPENED", "IN_PROGRESS"].includes(b.status),
   );
@@ -697,19 +667,19 @@ function TesterDashboard({ user, router }) {
     },
     {
       icon: FlaskConical,
-      label: "In QA Testing",
-      value: qaProjects.length,
-      color: "text-[#c847ff]",
+      label: "In Progress",
+      value: inProgressProjects.length,
+      color: "text-[#47c8ff]",
     },
     {
       icon: Bug,
-      label: "Bugs Reported",
+      label: "Issues Reported",
       value: bugs.length,
       color: "text-[#ff4747]",
     },
     {
       icon: CheckCircle2,
-      label: "Resolved Bugs",
+      label: "Resolved Issues",
       value: resolvedBugs.length,
       color: "text-[#47ff8a]",
     },
@@ -963,7 +933,7 @@ function GenericEmployeeDashboard({ user, router }) {
     },
     {
       icon: Bug,
-      label: "Open Bugs",
+      label: "Open Issues",
       value: openBugs.length,
       color: openBugs.length > 0 ? "text-[#ff4747]" : "text-[#47ff8a]",
     },
@@ -1075,7 +1045,7 @@ function GenericEmployeeDashboard({ user, router }) {
             <div className="flex items-center gap-2">
               <Bug className="w-4 h-4 text-[#ff4747]" />
               <span className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
-                My Open Bugs
+                My Open Issues
               </span>
             </div>
             <button
@@ -1111,7 +1081,7 @@ function GenericEmployeeDashboard({ user, router }) {
               <div className="flex items-center justify-center gap-2 py-8 text-[#47ff8a]">
                 <CheckCircle2 className="w-4 h-4" />
                 <p className="text-[11px] tracking-widest uppercase">
-                  No open bugs — great work!
+                  No open issues — great work!
                 </p>
               </div>
             )}

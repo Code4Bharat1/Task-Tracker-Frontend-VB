@@ -979,8 +979,8 @@ export default function EmployeeProjectDetailPage() {
     const prev = project.status;
     try {
       setSubmittingProject(true);
-      setProject({ ...project, status: "QA_TESTING" });
-      await updateProject(params.id, { status: "QA_TESTING" });
+      setProject({ ...project, status: "IN_PROGRESS" });
+      await updateProject(params.id, { status: "IN_PROGRESS" });
       setProject(await getProject(params.id));
     } catch (err) {
       setProject((p) => ({ ...(p || {}), status: prev }));
@@ -999,7 +999,7 @@ export default function EmployeeProjectDetailPage() {
     if (!project) return;
     try {
       setDeploying(true);
-      await updateProject(params.id, { status: "DEPLOYED" });
+      await updateProject(params.id, { status: "COMPLETED" });
       setProject(await getProject(params.id));
     } catch (err) {
       setError(
@@ -1080,7 +1080,7 @@ export default function EmployeeProjectDetailPage() {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span
-              className={`inline-flex px-2.5 py-0.5 text-[10px] tracking-[0.1em] uppercase font-bold border ${project.status === "DEPLOYED" ? "text-[#47ff8a] border-[#47ff8a]/30 bg-[#47ff8a]/10" : project.status === "IN_PROGRESS" ? "text-[#47c8ff] border-[#47c8ff]/30 bg-[#47c8ff]/10" : "text-foreground-muted border-foreground/15 bg-foreground/10"}`}
+              className={`inline-flex px-2.5 py-0.5 text-[10px] tracking-[0.1em] uppercase font-bold border ${project.status === "COMPLETED" ? "text-[#47ff8a] border-[#47ff8a]/30 bg-[#47ff8a]/10" : project.status === "IN_PROGRESS" ? "text-[#47c8ff] border-[#47c8ff]/30 bg-[#47c8ff]/10" : "text-foreground-muted border-foreground/15 bg-foreground/10"}`}
             >
               {project.status?.replace(/_/g, " ")}
             </span>
@@ -1414,7 +1414,7 @@ export default function EmployeeProjectDetailPage() {
         )}
 
       {/* Testing Phases */}
-      {project?.status === "QA_TESTING" && (
+      {project?.status === "IN_PROGRESS" && (
         <div>
           <div className="flex items-center gap-2 mb-4">
             <CheckCircle2 className="w-4 h-4 text-[#e8a847]" />
