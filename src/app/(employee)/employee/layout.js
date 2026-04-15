@@ -12,7 +12,7 @@ import {
   Briefcase,
   Code,
   FlaskConical,
-  Layers,
+  CheckSquare,
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
@@ -55,7 +55,7 @@ const NAV_CONFIG = {
         href: "/employee/dashboard",
       },
       { label: "Projects", icon: FolderKanban, href: "/employee/projects" },
-      { label: "Modules", icon: Layers, href: "/employee/modules" },
+      { label: "Tasks", icon: CheckSquare, href: "/employee/tasks" },
       {
         label: "Daily Logs",
         icon: ClipboardList,
@@ -79,9 +79,9 @@ const NAV_CONFIG = {
         href: "/employee/projects",
       },
       {
-        label: "My Modules",
-        icon: Layers,
-        href: "/employee/modules",
+        label: "My Tasks",
+        icon: CheckSquare,
+        href: "/employee/tasks",
       },
       {
         label: "Daily Logs",

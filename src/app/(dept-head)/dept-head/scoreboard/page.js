@@ -20,7 +20,7 @@ import { getProjects } from "@/services/projectService";
 import { getUsers, updateUser } from "@/services/userService";
 import { getAllLogs } from "@/services/dailyLogService";
 import { getAllBugs } from "@/services/bugService";
-import { getModules } from "@/services/moduleService";
+import { getTasks } from "@/services/taskService";
 
 // ─── Period filter helper ─────────────────────────────────────
 const PERIODS = [
@@ -98,7 +98,7 @@ export default function ScoreboardPage() {
   const [users, setUsers] = useState([]);
   const [logs, setLogs] = useState([]);
   const [bugs, setBugs] = useState([]);
-  const [allModules, setAllModules] = useState([]);
+  const [allTasks, setAllTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -134,12 +134,12 @@ export default function ScoreboardPage() {
       setBugs(bugsData);
       setProjects(projectsData);
 
-      // Load all modules
-      const modulesResults = await Promise.allSettled(
-        projectsData.map((p) => getModules(p._id)),
+      // Load all tasks
+      const tasksResults = await Promise.allSettled(
+        projectsData.map((p) => getTasks(p._id)),
       );
-      setAllModules(
-        modulesResults
+      setAllTasks(
+        tasksResults
           .filter((r) => r.status === "fulfilled")
           .flatMap((r) => r.value),
       );
@@ -197,19 +197,19 @@ export default function ScoreboardPage() {
       const openBugs = userBugs.filter((b) =>
         ["OPEN", "REOPENED"].includes(b.status),
       ).length;
-      const userModules = allModules.filter((m) => m.assignedTo === u._id);
-      const completed = userModules.filter((m) =>
-        ["APPROVED", "DEPLOYED"].includes(m.status),
-      ).length;
-      const reworks = userModules.filter(
-        (m) => m.status === "CODE_REVIEW",
-      ).length; // proxy for rework
+      const userTasks = allTasks.filter((t) =>
+        (t.contributors || []).some(
+          (c) => (c.userId?._id || c.userId) === u._id,
+        ),
+      );
+      const completed = userTasks.filter((t) => t.status === "DONE").length;
+      const reworks = userTasks.filter((t) => t.status === "REJECTED").length;
 
       const score = calcScore({
         logsCount: userLogs.length,
         bugsCount: openBugs,
         modulesCompleted: completed,
-        modulesTotal: userModules.length,
+        modulesTotal: userTasks.length,
         reworkCount: reworks,
       });
 
@@ -219,7 +219,7 @@ export default function ScoreboardPage() {
         openBugs,
         totalBugs: userBugs.length,
         completed,
-        totalModules: userModules.length,
+        totalModules: userTasks.length,
         reworks,
         score,
       };
@@ -254,7 +254,7 @@ export default function ScoreboardPage() {
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-3.5 h-3.5 text-[#47ff8a]" />
             <span className="text-foreground-muted">
-              Module Completion: up to 40 pts
+              Task Completion: up to 40 pts
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -288,7 +288,7 @@ export default function ScoreboardPage() {
               "#",
               "Employee",
               "Logs",
-              "Modules",
+              "Tasks",
               "Bugs",
               "Behaviour",
               "Score",
@@ -351,7 +351,7 @@ export default function ScoreboardPage() {
                       value={emp.logsCount}
                       color="text-[#47c8ff]"
                     />
-                    {/* Modules */}
+                    {/* Tasks */}
                     <MetricChip
                       icon={CheckCircle2}
                       label="Done"
@@ -434,7 +434,7 @@ export default function ScoreboardPage() {
       </div>
 
       <p className="text-[10px] tracking-[0.1em] uppercase text-foreground-muted">
-        Scores are calculated in real-time from logs, modules, and bug data.
+        Scores are calculated in real-time from logs, tasks, and bug data.
       </p>
     </div>
   );

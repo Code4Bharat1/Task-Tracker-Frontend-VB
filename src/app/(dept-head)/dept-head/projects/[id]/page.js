@@ -13,9 +13,8 @@ import {
   FileText,
 } from "lucide-react";
 import { getProject, updateProject } from "@/services/projectService";
-import { getModules } from "@/services/moduleService";
+import { getTasks, TASK_STATUS_META } from "@/services/taskService";
 import { getUsers } from "@/services/userService";
-import { MODULE_STATUS_META } from "@/services/moduleService";
 
 // ─── Status Meta ─────────────────────────────────────────────
 const PROJECT_STATUS_META = {
@@ -84,7 +83,7 @@ export default function ProjectDetailPage() {
   const router = useRouter();
   const { id } = useParams();
   const [project, setProject] = useState(null);
-  const [modules, setModules] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -96,7 +95,7 @@ export default function ProjectDetailPage() {
       setError(null);
       const [projR, modsR, usersR] = await Promise.allSettled([
         getProject(id),
-        getModules(id),
+        getTasks(id),
         getUsers(),
       ]);
       if (projR.status === "fulfilled") {
@@ -135,7 +134,7 @@ export default function ProjectDetailPage() {
         setError("Failed to load project. Please try again.");
         return;
       }
-      setModules(modsR.status === "fulfilled" ? modsR.value : []);
+      setTasks(modsR.status === "fulfilled" ? modsR.value : []);
     } catch {
       setError("Failed to load project. Please try again.");
     } finally {
@@ -190,10 +189,8 @@ export default function ProjectDetailPage() {
     );
   }
 
-  const completedModules = modules.filter((m) =>
-    ["APPROVED", "DEPLOYED"].includes(m.status),
-  ).length;
-  const showProgress = (modules || []).length > 0;
+  const completedTasks = tasks.filter((t) => t.status === "DONE").length;
+  const showProgress = tasks.length > 0;
 
   return (
     <div className="space-y-6">
@@ -285,7 +282,7 @@ export default function ProjectDetailPage() {
                 Progress
               </p>
               <p className="text-[12px] text-foreground font-medium">
-                {completedModules}/{modules.length} modules
+                {completedTasks}/{tasks.length} tasks done
               </p>
             </div>
           )}
@@ -331,46 +328,56 @@ export default function ProjectDetailPage() {
       <div className="border border-outline bg-surface-low">
         <div className="flex items-center px-6 py-4 border-b border-outline">
           <span className="text-[11px] tracking-[0.2em] uppercase font-bold text-foreground">
-            Modules
+            Tasks
           </span>
         </div>
 
-        {modules.length === 0 ? (
+        {tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-foreground-muted">
             <p className="text-[12px] tracking-[0.1em] uppercase">
-              No modules yet.
+              No tasks yet.
             </p>
           </div>
         ) : (
           <div className="divide-y divide-outline">
-            {modules.map((m) => (
-              <div
-                key={m._id}
-                className="flex items-center gap-5 px-6 py-4 hover:bg-surface-container transition-colors group"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-foreground">
-                    {m.title}
-                  </p>
-                  {m.description && (
-                    <p className="text-[11px] text-foreground-muted mt-0.5 truncate">
-                      {m.description}
+            {tasks.map((t) => {
+              const cNames = (t.contributors || [])
+                .map((c) => c.userId?.name || c.userId)
+                .filter(Boolean);
+              const rNames = (t.reviewers || [])
+                .map((r) => r.userId?.name || r.userId)
+                .filter(Boolean);
+              return (
+                <div
+                  key={t._id}
+                  className="flex items-center gap-5 px-6 py-4 hover:bg-surface-container transition-colors group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-foreground">
+                      {t.title}
                     </p>
-                  )}
+                    {t.description && (
+                      <p className="text-[11px] text-foreground-muted mt-0.5 truncate">
+                        {t.description}
+                      </p>
+                    )}
+                  </div>
+                  <StatusBadge status={t.status} meta={TASK_STATUS_META} />
+                  <div className="flex items-center gap-1.5 text-foreground-muted shrink-0">
+                    <Users className="w-3 h-3" />
+                    <span className="text-[11px]">
+                      {cNames.length > 0 ? cNames.join(", ") : "Unassigned"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-foreground-muted shrink-0">
+                    <Calendar className="w-3 h-3" />
+                    <span className="text-[11px]">
+                      {formatDate(t.deadline)}
+                    </span>
+                  </div>
                 </div>
-                <StatusBadge status={m.status} meta={MODULE_STATUS_META} />
-                <div className="flex items-center gap-1.5 text-foreground-muted shrink-0">
-                  <Users className="w-3 h-3" />
-                  <span className="text-[11px]">
-                    {m.assignedName || "Unassigned"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 text-foreground-muted shrink-0">
-                  <Calendar className="w-3 h-3" />
-                  <span className="text-[11px]">{formatDate(m.deadline)}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

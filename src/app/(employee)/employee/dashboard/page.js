@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   FolderKanban,
-  Layers,
+  CheckSquare,
   ClipboardList,
   Bug,
   CheckCircle2,
@@ -18,7 +18,7 @@ import {
 import { useAuth } from "@/lib/auth/context";
 import AuthLoader from "@/components/AuthLoader";
 import { getMyProjects } from "@/services/projectService";
-import { getMyModules, getModules } from "@/services/moduleService";
+import { getMyTasks, getTasks } from "@/services/taskService";
 import { getMyLogs, getAllLogs } from "@/services/dailyLogService";
 import {
   getMyBugs,
@@ -158,7 +158,7 @@ export default function EmployeeDashboard() {
 // ─── PM Dashboard ─────────────────────────────────────────────
 function PMDashboard({ user, router }) {
   const [projects, setProjects] = useState([]);
-  const [allModules, setAllModules] = useState([]);
+  const [allTasks, setAllTasks] = useState([]);
   const [bugs, setBugs] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -169,11 +169,11 @@ function PMDashboard({ user, router }) {
       setDataLoading(true);
       const projs = await getMyProjects();
       setProjects(projs);
-      const modulesResults = await Promise.allSettled(
-        projs.map((p) => getModules(p._id)),
+      const tasksResults = await Promise.allSettled(
+        projs.map((p) => getTasks(p._id)),
       );
-      setAllModules(
-        modulesResults
+      setAllTasks(
+        tasksResults
           .filter((r) => r.status === "fulfilled")
           .flatMap((r) => r.value),
       );
@@ -191,9 +191,7 @@ function PMDashboard({ user, router }) {
   }, [loadData]);
 
   const activeProjects = projects.filter((p) => p.status !== "DEPLOYED");
-  const pendingReview = allModules.filter(
-    (m) => m.status === "DEV_COMPLETE" || m.status === "CODE_REVIEW",
-  );
+  const pendingReview = allTasks.filter((t) => t.status === "IN_REVIEW");
   const openBugs = bugs.filter((b) => ["OPEN", "REOPENED"].includes(b.status));
 
   const stats = [
@@ -204,7 +202,7 @@ function PMDashboard({ user, router }) {
       color: "text-primary",
     },
     {
-      icon: Layers,
+      icon: CheckSquare,
       label: "Pending Review",
       value: pendingReview.length,
       color: "text-[#e8a847]",
@@ -291,40 +289,35 @@ function PMDashboard({ user, router }) {
         <div className="border border-outline bg-surface-low">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline">
             <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-[#e8a847]" />
+              <CheckSquare className="w-4 h-4 text-[#e8a847]" />
               <span className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
                 Pending Review
               </span>
             </div>
             <button
-              onClick={() => router.push("/employee/modules")}
+              onClick={() => router.push("/employee/tasks")}
               className="flex items-center gap-1 text-[10px] tracking-widest uppercase text-foreground-muted hover:text-primary transition-colors"
             >
               View All <ArrowRight className="w-3 h-3" />
             </button>
           </div>
           <div className="divide-y divide-outline">
-            {pendingReview.slice(0, 5).map((m) => (
+            {pendingReview.slice(0, 5).map((t) => (
               <div
-                key={m._id}
+                key={t._id}
                 className="flex items-center justify-between px-5 py-3 hover:bg-surface-container transition-colors"
               >
-                <div>
-                  <p className="text-[12px] text-foreground font-medium">
-                    {m.title}
-                  </p>
-                  <p className="text-[10px] text-foreground-muted mt-0.5">
-                    {m.assignedName}
-                  </p>
-                </div>
-                <StatusBadge status={m.status} usePM />
+                <p className="text-[12px] text-foreground font-medium">
+                  {t.title}
+                </p>
+                <StatusBadge status={t.status} usePM />
               </div>
             ))}
             {pendingReview.length === 0 && (
               <div className="flex items-center justify-center gap-2 py-8 text-[#47ff8a]">
                 <CheckCircle2 className="w-4 h-4" />
                 <p className="text-[11px] tracking-widest uppercase">
-                  All modules reviewed!
+                  All tasks reviewed!
                 </p>
               </div>
             )}
@@ -408,7 +401,7 @@ function TopPerformersCard({ performers }) {
 // ─── Developer Dashboard ──────────────────────────────────────
 function DeveloperDashboard({ user, router }) {
   const [projects, setProjects] = useState([]);
-  const [modules, setModules] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [logs, setLogs] = useState([]);
   const [bugs, setBugs] = useState([]);
   const [performers, setPerformers] = useState([]);
@@ -424,7 +417,7 @@ function DeveloperDashboard({ user, router }) {
       weekStart.setHours(0, 0, 0, 0);
       const [pR, mR, lR, bR, allLogsR] = await Promise.allSettled([
         getMyProjects(),
-        getMyModules(user?._id),
+        getMyTasks(user?._id),
         getMyLogs(),
         getMyBugs(),
         getAllLogs(),
@@ -435,7 +428,7 @@ function DeveloperDashboard({ user, router }) {
       const b = bR.status === "fulfilled" ? bR.value : [];
       const allWeekLogs = allLogsR.status === "fulfilled" ? allLogsR.value : [];
       setProjects(p);
-      setModules(m);
+      setTasks(m);
       setLogs(l);
       setBugs(b);
       const thisWeek = allWeekLogs.filter(
@@ -467,9 +460,7 @@ function DeveloperDashboard({ user, router }) {
     loadData();
   }, [loadData]);
 
-  const pendingModules = modules.filter(
-    (m) => !["APPROVED", "DEPLOYED"].includes(m.status),
-  );
+  const pendingTasks = tasks.filter((m) => !m.status === "DONE");
   const openBugs = bugs.filter((b) =>
     ["OPEN", "REOPENED", "IN_PROGRESS"].includes(b.status),
   );
@@ -488,9 +479,9 @@ function DeveloperDashboard({ user, router }) {
       color: "text-primary",
     },
     {
-      icon: Layers,
-      label: "Pending Modules",
-      value: pendingModules.length,
+      icon: CheckSquare,
+      label: "pendingTasks",
+      value: pendingTasks.length,
       color: "text-[#e8a847]",
     },
     {
@@ -575,20 +566,20 @@ function DeveloperDashboard({ user, router }) {
         <div className="border border-outline bg-surface-low">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline">
             <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-[#e8a847]" />
+              <CheckSquare className="w-4 h-4 text-[#e8a847]" />
               <span className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
-                Pending Modules
+                Pending Tasks
               </span>
             </div>
             <button
-              onClick={() => router.push("/employee/modules")}
+              onClick={() => router.push("/employee/tasks")}
               className="flex items-center gap-1 text-[10px] tracking-widest uppercase text-foreground-muted hover:text-primary transition-colors"
             >
               View All <ArrowRight className="w-3 h-3" />
             </button>
           </div>
           <div className="divide-y divide-outline">
-            {pendingModules.slice(0, 4).map((m) => (
+            {pendingTasks.slice(0, 4).map((m) => (
               <div
                 key={m._id}
                 className="flex items-center justify-between px-5 py-3 hover:bg-surface-container transition-colors"
@@ -599,11 +590,11 @@ function DeveloperDashboard({ user, router }) {
                 <StatusBadge status={m.status} />
               </div>
             ))}
-            {pendingModules.length === 0 && (
+            {pendingTasks.length === 0 && (
               <div className="flex items-center justify-center gap-2 py-8 text-[#47ff8a]">
                 <CheckCircle2 className="w-4 h-4" />
                 <p className="text-[11px] tracking-widest uppercase">
-                  All modules up to date!
+                  All tasks up to date!
                 </p>
               </div>
             )}
@@ -881,7 +872,7 @@ function TesterDashboard({ user, router }) {
 // ─── Generic Employee Dashboard ───────────────────────────────
 function GenericEmployeeDashboard({ user, router }) {
   const [projects, setProjects] = useState([]);
-  const [modules, setModules] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [logs, setLogs] = useState([]);
   const [bugs, setBugs] = useState([]);
   const [performers, setPerformers] = useState([]);
@@ -897,7 +888,7 @@ function GenericEmployeeDashboard({ user, router }) {
       weekStart.setHours(0, 0, 0, 0);
       const [pR, mR, lR, bR, allLogsR] = await Promise.allSettled([
         getMyProjects(),
-        getMyModules(user?._id),
+        getMyTasks(user?._id),
         getMyLogs(),
         getMyBugs(),
         getAllLogs(),
@@ -908,7 +899,7 @@ function GenericEmployeeDashboard({ user, router }) {
       const b = bR.status === "fulfilled" ? bR.value : [];
       const allWeekLogs = allLogsR.status === "fulfilled" ? allLogsR.value : [];
       setProjects(p);
-      setModules(m);
+      setTasks(m);
       setLogs(l);
       setBugs(b);
       const thisWeek = allWeekLogs.filter(
@@ -940,9 +931,7 @@ function GenericEmployeeDashboard({ user, router }) {
     loadData();
   }, [loadData]);
 
-  const pendingModules = modules.filter(
-    (m) => !["APPROVED", "DEPLOYED"].includes(m.status),
-  );
+  const pendingTasks = tasks.filter((m) => !m.status === "DONE");
   const openBugs = bugs.filter((b) =>
     ["OPEN", "REOPENED", "IN_PROGRESS"].includes(b.status),
   );
@@ -961,9 +950,9 @@ function GenericEmployeeDashboard({ user, router }) {
       color: "text-primary",
     },
     {
-      icon: Layers,
-      label: "Pending Modules",
-      value: pendingModules.length,
+      icon: CheckSquare,
+      label: "pendingTasks",
+      value: pendingTasks.length,
       color: "text-[#e8a847]",
     },
     {
@@ -1048,18 +1037,18 @@ function GenericEmployeeDashboard({ user, router }) {
         <div className="border border-outline bg-surface-low">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline">
             <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-[#e8a847]" />
+              <CheckSquare className="w-4 h-4 text-[#e8a847]" />
               <span className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
-                Pending Modules
+                pendingTasks
               </span>
             </div>
             <span className="text-[10px] tracking-widest uppercase text-foreground-muted">
-              {pendingModules.length} task
-              {pendingModules.length !== 1 ? "s" : ""}
+              {pendingTasks.length} task
+              {pendingTasks.length !== 1 ? "s" : ""}
             </span>
           </div>
           <div className="divide-y divide-outline">
-            {pendingModules.slice(0, 4).map((m) => (
+            {pendingTasks.slice(0, 4).map((m) => (
               <div
                 key={m._id}
                 className="flex items-center justify-between px-5 py-3 hover:bg-surface-container transition-colors"
@@ -1070,11 +1059,11 @@ function GenericEmployeeDashboard({ user, router }) {
                 <StatusBadge status={m.status} />
               </div>
             ))}
-            {pendingModules.length === 0 && (
+            {pendingTasks.length === 0 && (
               <div className="flex items-center justify-center gap-2 py-8 text-[#47ff8a]">
                 <CheckCircle2 className="w-4 h-4" />
                 <p className="text-[11px] tracking-widest uppercase">
-                  All modules up to date!
+                  All tasks up to date!
                 </p>
               </div>
             )}

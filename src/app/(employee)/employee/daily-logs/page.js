@@ -8,7 +8,7 @@ import {
   AlertCircle,
   CheckCircle2,
   X,
-  Layers,
+  CheckSquare,
   FolderKanban,
   Upload,
   Trash2,
@@ -19,7 +19,7 @@ import AuthLoader from "@/components/AuthLoader";
 import { TableSkeleton } from "@/components/skeletons";
 import api from "@/lib/api";
 import { getMyProjects } from "@/services/projectService";
-import { getModules } from "@/services/moduleService";
+import { getTasks } from "@/services/taskService";
 import { List, AutoSizer } from "react-virtualized";
 import { DatePicker } from "@/components/DatePicker";
 
@@ -35,52 +35,54 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
   );
   const [workItems, setWorkItems] = useState(
     existing
-      ? (existing.entries?.length
-          ? existing.entries.map((e) => ({
-              projectId: e.projectId || "",
-              moduleId: e.moduleId || "",
-              moduleName: e.moduleTitle || "",
-              description: e.description || "",
-              screenshotFile: null,
-              screenshotPreview: e.screenshotUrl || "",
-            }))
-          : [{
+      ? existing.entries?.length
+        ? existing.entries.map((e) => ({
+            projectId: e.projectId || "",
+            taskId: e.taskId || "",
+            taskTitle: e.taskTitle || "",
+            description: e.description || "",
+            screenshotFile: null,
+            screenshotPreview: e.screenshotUrl || "",
+          }))
+        : [
+            {
               projectId: existing.projectId || "",
-              moduleId: existing.moduleId || "",
-              moduleName: existing.moduleName || "",
+              taskId: existing.taskId || "",
+              taskTitle: existing.taskTitle || "",
               description: existing.description || "",
               screenshotFile: null,
               screenshotPreview: existing?.screenshotUrl || "",
-            }])
+            },
+          ]
       : [
           {
             projectId: "",
-            moduleId: "",
-            moduleName: "",
+            taskId: "",
+            taskTitle: "",
             description: "",
             screenshotFile: null,
             screenshotPreview: "",
           },
         ],
   );
-  const [modulesByProject, setModulesByProject] = useState({});
+  const [tasksByProject, setTasksByProject] = useState({});
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
 
-  async function fetchModulesForProject(projectId) {
+  async function fetchTasksForProject(projectId) {
     if (!projectId) return;
-    if (modulesByProject[projectId] !== undefined) return;
+    if (tasksByProject[projectId] !== undefined) return;
     try {
-      const mods = await getModules(projectId);
-      setModulesByProject((prev) => ({ ...prev, [projectId]: mods }));
+      const tasks = await getTasks(projectId);
+      setTasksByProject((prev) => ({ ...prev, [projectId]: tasks }));
     } catch {
-      setModulesByProject((prev) => ({ ...prev, [projectId]: [] }));
+      setTasksByProject((prev) => ({ ...prev, [projectId]: [] }));
     }
   }
 
   useEffect(() => {
     workItems.forEach((item) => {
-      if (item.projectId) fetchModulesForProject(item.projectId);
+      if (item.projectId) fetchTasksForProject(item.projectId);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -103,14 +105,14 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
         i === index ? { ...item, [field]: value } : item,
       );
       if (field === "projectId") {
-        updated[index].moduleId = "";
-        updated[index].moduleName = "";
-        if (value) fetchModulesForProject(value);
+        updated[index].taskId = "";
+        updated[index].taskTitle = "";
+        if (value) fetchTasksForProject(value);
       }
-      if (field === "moduleId") {
-        const mods = modulesByProject[updated[index].projectId] || [];
-        const mod = mods.find((m) => m._id === value);
-        updated[index].moduleName = mod?.title || "";
+      if (field === "taskId") {
+        const tasks = tasksByProject[updated[index].projectId] || [];
+        const task = tasks.find((t) => t._id === value);
+        updated[index].taskTitle = task?.title || "";
       }
       return updated;
     });
@@ -121,14 +123,21 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
       ...prev,
       {
         projectId: "",
-        moduleId: "",
-        moduleName: "",
+        taskId: "",
+        taskTitle: "",
         description: "",
         screenshotFile: null,
         screenshotPreview: "",
       },
     ]);
-    setTimeout(() => lastItemRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    setTimeout(
+      () =>
+        lastItemRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        }),
+      50,
+    );
   }
 
   function removeWorkItem(index) {
@@ -200,7 +209,7 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
           logDate: date,
           entries: processedItems.map((item) => ({
             projectId: item.projectId,
-            moduleId: item.moduleId || null,
+            taskId: item.taskId || null,
             description: item.description,
           })),
         });
@@ -210,7 +219,7 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
           logDate: date,
           entries: processedItems.map((item) => ({
             projectId: item.projectId,
-            moduleId: item.moduleId || null,
+            taskId: item.taskId || null,
             description: item.description,
           })),
         });
@@ -320,42 +329,42 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
                   </select>
                 </div>
 
-                {/* Module */}
+                {/* Task */}
                 <div>
                   <label className="block text-[10px] tracking-[0.12em] uppercase text-foreground-muted mb-1">
-                    Module{" "}
+                    Task{" "}
                     <span className="text-[#47c8ff] normal-case tracking-normal font-normal">
                       (IN_PROGRESS only)
                     </span>
                   </label>
                   <select
-                    value={item.moduleId}
+                    value={item.taskId}
                     disabled={!item.projectId}
                     onChange={(e) =>
-                      updateWorkItem(index, "moduleId", e.target.value)
+                      updateWorkItem(index, "taskId", e.target.value)
                     }
                     className="w-full bg-surface-low border border-outline px-3 py-2 text-[12px] text-foreground focus:outline-none focus:border-primary disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <option value="">
                       {item.projectId
-                        ? "No specific module"
+                        ? "No specific task"
                         : "Select a project first..."}
                     </option>
-                    {(modulesByProject[item.projectId] || [])
-                      .filter((m) => m.status === "IN_PROGRESS")
-                      .map((m) => (
-                        <option key={m._id} value={m._id}>
-                          {m.title}
+                    {(tasksByProject[item.projectId] || [])
+                      .filter((t) => t.status === "IN_PROGRESS")
+                      .map((t) => (
+                        <option key={t._id} value={t._id}>
+                          {t.title}
                         </option>
                       ))}
                   </select>
                   {item.projectId &&
-                    (modulesByProject[item.projectId] || []).length > 0 &&
-                    (modulesByProject[item.projectId] || []).filter(
-                      (m) => m.status === "IN_PROGRESS",
+                    (tasksByProject[item.projectId] || []).length > 0 &&
+                    (tasksByProject[item.projectId] || []).filter(
+                      (t) => t.status === "IN_PROGRESS",
                     ).length === 0 && (
                       <p className="text-[10px] text-[#e8a847] mt-1 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" /> No modules are
+                        <AlertCircle className="w-3 h-3" /> No tasks are
                         currently IN_PROGRESS for this project.
                       </p>
                     )}
@@ -528,8 +537,16 @@ function GroupedLogList({ logs, projects, today, onEdit, onDelete }) {
                   </span>
                 )}
                 <span className="text-[10px] text-foreground-muted">
-                  {groupLogs.reduce((sum, l) => sum + (l.entries?.length || 1), 0)}{" "}
-                  {groupLogs.reduce((sum, l) => sum + (l.entries?.length || 1), 0) === 1 ? "entry" : "entries"}
+                  {groupLogs.reduce(
+                    (sum, l) => sum + (l.entries?.length || 1),
+                    0,
+                  )}{" "}
+                  {groupLogs.reduce(
+                    (sum, l) => sum + (l.entries?.length || 1),
+                    0,
+                  ) === 1
+                    ? "entry"
+                    : "entries"}
                 </span>
               </div>
             </button>
@@ -540,10 +557,20 @@ function GroupedLogList({ logs, projects, today, onEdit, onDelete }) {
                 {groupLogs.flatMap((l) => {
                   const entryList = l.entries?.length
                     ? l.entries
-                    : [{ projectId: l.projectId, moduleId: l.moduleId, moduleName: l.moduleName, description: l.description }];
+                    : [
+                        {
+                          projectId: l.projectId,
+                          taskId: l.taskId,
+                          taskTitle: l.taskTitle,
+                          description: l.description,
+                        },
+                      ];
 
                   return entryList.map((entry, idx) => {
-                    const proj = projects.find((p) => p._id === (entry.projectId?._id || entry.projectId));
+                    const proj = projects.find(
+                      (p) =>
+                        p._id === (entry.projectId?._id || entry.projectId),
+                    );
                     return (
                       <div
                         key={`${l._id}-${idx}`}
@@ -553,9 +580,10 @@ function GroupedLogList({ logs, projects, today, onEdit, onDelete }) {
                           <p className="text-[12px] text-foreground">
                             {proj?.name || entry.projectName || entry.projectId}
                           </p>
-                          {(entry.moduleTitle || entry.moduleName) && (
+                          {entry.taskTitle && (
                             <p className="text-[11px] text-foreground-muted flex items-center gap-1 mt-0.5">
-                              <Layers className="w-3 h-3" /> {entry.moduleTitle || entry.moduleName}
+                              <CheckSquare className="w-3 h-3" />{" "}
+                              {entry.taskTitle}
                             </p>
                           )}
                         </div>
@@ -811,7 +839,7 @@ export default function EmployeeDailyLogsPage() {
           </div>
           {/* Table Header */}
           <div className="grid grid-cols-[2fr_1fr_auto] gap-4 px-6 py-3 border-b border-outline bg-surface-container">
-            {["Project / Module", "Description", ""].map((h) => (
+            {["Project / Task", "Description", ""].map((h) => (
               <span
                 key={h}
                 className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted font-bold"

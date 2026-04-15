@@ -11,7 +11,6 @@ import {
   X,
   Users,
   FolderKanban,
-  Layers,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import AuthLoader from "@/components/AuthLoader";
@@ -25,7 +24,7 @@ import {
   BUG_STATUS_META,
 } from "@/services/bugService";
 import { getMyProjects } from "@/services/projectService";
-import { getModules } from "@/services/moduleService";
+import { getTasks } from "@/services/taskService";
 import { getUsers } from "@/services/userService";
 
 // ─── Badge Components ─────────────────────────────────────────
@@ -68,19 +67,19 @@ function ReportModal({ reporterId, projects, users, onClose, onSave }) {
     description: "",
     severity: "MEDIUM",
     projectId: "",
-    moduleId: "",
+    taskId: "",
     assignedTo: "",
   });
-  const [modules, setModules] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
   useEffect(() => {
     if (form.projectId)
-      getModules(form.projectId)
-        .then(setModules)
-        .catch(() => setModules([]));
-    else setModules([]);
+      getTasks(form.projectId)
+        .then(setTasks)
+        .catch(() => setTasks([]));
+    else setTasks([]);
   }, [form.projectId]);
 
   useEffect(() => {
@@ -181,7 +180,7 @@ function ReportModal({ reporterId, projects, users, onClose, onSave }) {
               <select
                 value={form.projectId}
                 onChange={(e) =>
-                  setForm({ ...form, projectId: e.target.value, moduleId: "" })
+                  setForm({ ...form, projectId: e.target.value, taskId: "" })
                 }
                 className="w-full bg-surface-container border border-outline px-3 py-2.5 text-[12px] text-foreground focus:outline-none focus:border-primary"
               >
@@ -195,18 +194,18 @@ function ReportModal({ reporterId, projects, users, onClose, onSave }) {
             </div>
             <div>
               <label className="block text-[10px] tracking-[0.15em] uppercase text-foreground-muted mb-1.5">
-                Module
+                Task
               </label>
               <select
-                value={form.moduleId}
-                onChange={(e) => setForm({ ...form, moduleId: e.target.value })}
+                value={form.taskId}
+                onChange={(e) => setForm({ ...form, taskId: e.target.value })}
                 disabled={!form.projectId}
                 className="w-full bg-surface-container border border-outline px-3 py-2.5 text-[12px] text-foreground focus:outline-none focus:border-primary disabled:opacity-50"
               >
-                <option value="">No module</option>
-                {modules.map((m) => (
-                  <option key={m._id} value={m._id}>
-                    {m.title}
+                <option value="">No task</option>
+                {tasks.map((t) => (
+                  <option key={t._id} value={t._id}>
+                    {t.title}
                   </option>
                 ))}
               </select>
