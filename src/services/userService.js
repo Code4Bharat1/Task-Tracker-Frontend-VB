@@ -117,3 +117,11 @@ export async function uploadProfilePic(id, file) {
   return data.user;
 }
 
+/**
+ * Get leaderboard — GET /leaderboard?period=
+ * Available to any authenticated user (scoped to their department)
+ */
+export async function getLeaderboard(period = "all") {
+  const { data } = await api.get("/leaderboard", { params: { period } });
+  return data;
+}

@@ -160,3 +160,23 @@ export async function advanceTaskStatus(id) {
 export async function deleteTask(id) {
   await api.delete(`/tasks/${id}`);
 }
+
+/**
+ * Upload an attachment to a task — POST /tasks/:id/attachments
+ */
+export async function uploadTaskAttachment(id, file) {
+  const form = new FormData();
+  form.append("file", file);
+  const { data } = await api.post(`/tasks/${id}/attachments`, form);
+  return data.task ?? data;
+}
+
+/**
+ * Delete an attachment from a task — DELETE /tasks/:id/attachments
+ */
+export async function deleteTaskAttachment(id, publicId) {
+  const { data } = await api.delete(`/tasks/${id}/attachments`, {
+    data: { publicId },
+  });
+  return data.task ?? data;
+}

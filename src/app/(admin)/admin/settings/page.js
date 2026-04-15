@@ -14,6 +14,7 @@ import {
   Plus,
   X,
   Sunrise,
+  Trophy,
 } from "lucide-react";
 
 // ─── Helpers ──────────────────────────────────────────────────
@@ -55,6 +56,16 @@ const DEFAULT_FORM = {
   shiftStart: "09:00",
   shiftEnd: "18:00",
   logDeadlines: ["22:00"],
+  defaultTaskDeadline: "20:00",
+  missedTaskGracePeriod: 24,
+  scoringRules: {
+    taskOnTime: 2,
+    taskEarly: 3,
+    taskOverdue: -1,
+    taskMissed: -5,
+    dailyLogOnTime: 1,
+    dailyLogMissed: -2,
+  },
 };
 
 // ─── Field wrapper ────────────────────────────────────────────
@@ -110,6 +121,11 @@ export default function SettingsPage() {
         logDeadlines: (c.logDeadlines?.length ? c.logDeadlines : ["22:00"]).map(
           normalizeTimeTo24,
         ),
+        defaultTaskDeadline: normalizeTimeTo24(
+          c.defaultTaskDeadline || "20:00",
+        ),
+        missedTaskGracePeriod: c.missedTaskGracePeriod ?? 24,
+        scoringRules: { ...DEFAULT_FORM.scoringRules, ...c.scoringRules },
       });
     } catch {
       setLoadError("Failed to load company settings.");
@@ -144,6 +160,9 @@ export default function SettingsPage() {
         shiftStart: form.shiftStart,
         shiftEnd: form.shiftEnd,
         logDeadlines: form.logDeadlines,
+        defaultTaskDeadline: form.defaultTaskDeadline,
+        missedTaskGracePeriod: form.missedTaskGracePeriod,
+        scoringRules: form.scoringRules,
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -315,6 +334,105 @@ export default function SettingsPage() {
             </button> */}
           </div>
         </Field>
+      </Section>
+
+      {/* Scoring & Deadlines */}
+      <Section icon={Trophy} title="Scoring Rules">
+        <div className="grid grid-cols-2 gap-4">
+          <Field
+            label="Default Task Deadline"
+            hint="Auto-applied when a task has no explicit deadline."
+          >
+            <input
+              type="time"
+              value={form.defaultTaskDeadline}
+              onChange={(e) =>
+                setForm({ ...form, defaultTaskDeadline: e.target.value })
+              }
+              className="w-full bg-surface-container border border-outline px-3 py-2.5 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors [color-scheme:dark]"
+            />
+          </Field>
+          <Field
+            label="Missed Task Grace Period (hours)"
+            hint="Hours after deadline before a task counts as missed."
+          >
+            <input
+              type="number"
+              min={0}
+              value={form.missedTaskGracePeriod}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  missedTaskGracePeriod: Number(e.target.value),
+                })
+              }
+              className="w-full bg-surface-container border border-outline px-3 py-2.5 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors"
+            />
+          </Field>
+        </div>
+
+        <div>
+          <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted mb-3 font-bold">
+            Points Per Action
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              {
+                key: "taskEarly",
+                label: "Task Completed Early",
+                color: "text-[#47ff8a]",
+              },
+              {
+                key: "taskOnTime",
+                label: "Task On Time",
+                color: "text-primary",
+              },
+              {
+                key: "taskOverdue",
+                label: "Task Overdue",
+                color: "text-[#e8a847]",
+              },
+              {
+                key: "taskMissed",
+                label: "Task Missed",
+                color: "text-[#ff4747]",
+              },
+              {
+                key: "dailyLogOnTime",
+                label: "Daily Log On Time",
+                color: "text-primary",
+              },
+              {
+                key: "dailyLogMissed",
+                label: "Daily Log Missed",
+                color: "text-[#ff4747]",
+              },
+            ].map(({ key, label, color }) => (
+              <div
+                key={key}
+                className="flex items-center justify-between px-3 py-2.5 border border-outline bg-surface-container"
+              >
+                <span className={`text-[11px] font-semibold ${color}`}>
+                  {label}
+                </span>
+                <input
+                  type="number"
+                  value={form.scoringRules[key]}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      scoringRules: {
+                        ...form.scoringRules,
+                        [key]: Number(e.target.value),
+                      },
+                    })
+                  }
+                  className="w-16 bg-surface-low border border-outline px-2 py-1 text-[12px] text-foreground text-center focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       </Section>
     </div>
   );

@@ -13,6 +13,7 @@ import {
   Upload,
   Trash2,
   ChevronDown,
+  Clock,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import AuthLoader from "@/components/AuthLoader";
@@ -41,6 +42,9 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
             taskId: e.taskId || "",
             taskTitle: e.taskTitle || "",
             description: e.description || "",
+            logType: e.logType || "task_work",
+            startTime: e.startTime || "",
+            endTime: e.endTime || "",
             screenshotFile: null,
             screenshotPreview: e.screenshotUrl || "",
           }))
@@ -50,6 +54,9 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
               taskId: existing.taskId || "",
               taskTitle: existing.taskTitle || "",
               description: existing.description || "",
+              logType: "task_work",
+              startTime: "",
+              endTime: "",
               screenshotFile: null,
               screenshotPreview: existing?.screenshotUrl || "",
             },
@@ -60,6 +67,9 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
             taskId: "",
             taskTitle: "",
             description: "",
+            logType: "task_work",
+            startTime: "",
+            endTime: "",
             screenshotFile: null,
             screenshotPreview: "",
           },
@@ -126,6 +136,9 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
         taskId: "",
         taskTitle: "",
         description: "",
+        logType: "task_work",
+        startTime: "",
+        endTime: "",
         screenshotFile: null,
         screenshotPreview: "",
       },
@@ -211,6 +224,9 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
             projectId: item.projectId,
             taskId: item.taskId || null,
             description: item.description,
+            logType: item.logType || "task_work",
+            startTime: item.startTime || undefined,
+            endTime: item.endTime || undefined,
           })),
         });
       } else {
@@ -221,6 +237,9 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
             projectId: item.projectId,
             taskId: item.taskId || null,
             description: item.description,
+            logType: item.logType || "task_work",
+            startTime: item.startTime || undefined,
+            endTime: item.endTime || undefined,
           })),
         });
       }
@@ -368,6 +387,53 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
                         currently IN_PROGRESS for this project.
                       </p>
                     )}
+                </div>
+
+                {/* Log Type & Time Range */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[10px] tracking-[0.12em] uppercase text-foreground-muted mb-1">
+                      Type
+                    </label>
+                    <select
+                      value={item.logType}
+                      onChange={(e) =>
+                        updateWorkItem(index, "logType", e.target.value)
+                      }
+                      className="w-full bg-surface-low border border-outline px-3 py-2 text-[12px] text-foreground focus:outline-none focus:border-primary"
+                    >
+                      <option value="task_work">Task Work</option>
+                      <option value="meeting">Meeting</option>
+                      <option value="ad_hoc">Ad-hoc</option>
+                      <option value="review">Review</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] tracking-[0.12em] uppercase text-foreground-muted mb-1">
+                      Start Time
+                    </label>
+                    <input
+                      type="time"
+                      value={item.startTime}
+                      onChange={(e) =>
+                        updateWorkItem(index, "startTime", e.target.value)
+                      }
+                      className="w-full bg-surface-low border border-outline px-3 py-2 text-[12px] text-foreground focus:outline-none focus:border-primary [color-scheme:dark]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] tracking-[0.12em] uppercase text-foreground-muted mb-1">
+                      End Time
+                    </label>
+                    <input
+                      type="time"
+                      value={item.endTime}
+                      onChange={(e) =>
+                        updateWorkItem(index, "endTime", e.target.value)
+                      }
+                      className="w-full bg-surface-low border border-outline px-3 py-2 text-[12px] text-foreground focus:outline-none focus:border-primary [color-scheme:dark]"
+                    />
+                  </div>
                 </div>
 
                 {/* Description */}
@@ -586,6 +652,20 @@ function GroupedLogList({ logs, projects, today, onEdit, onDelete }) {
                               {entry.taskTitle}
                             </p>
                           )}
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {entry.logType && entry.logType !== "task_work" && (
+                              <span className="text-[9px] tracking-[0.1em] uppercase font-bold text-[#c847ff] border border-[#c847ff]/30 bg-[#c847ff]/10 px-1.5 py-0.5">
+                                {entry.logType.replace(/_/g, " ")}
+                              </span>
+                            )}
+                            {(entry.startTime || entry.endTime) && (
+                              <span className="text-[10px] text-foreground-muted flex items-center gap-1">
+                                <Clock className="w-3 h-3" />{" "}
+                                {entry.startTime || "—"} →{" "}
+                                {entry.endTime || "—"}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <p className="text-[12px] text-foreground-muted">
                           {entry.description}

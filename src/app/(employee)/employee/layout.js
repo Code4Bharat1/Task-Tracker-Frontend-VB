@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
+  Trophy,
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import Avatar from "@/components/Avatar";
@@ -42,6 +43,7 @@ const NAV_CONFIG = {
         href: "/employee/daily-logs",
       },
       { label: "Bugs", icon: Bug, href: "/employee/bugs" },
+      { label: "Leaderboard", icon: Trophy, href: "/employee/leaderboard" },
     ],
   },
   project_manager: {
@@ -61,6 +63,7 @@ const NAV_CONFIG = {
         icon: ClipboardList,
         href: "/employee/daily-logs",
       },
+      { label: "Leaderboard", icon: Trophy, href: "/employee/leaderboard" },
     ],
   },
   developer: {
@@ -89,6 +92,7 @@ const NAV_CONFIG = {
         href: "/employee/daily-logs",
       },
       { label: "Bugs", icon: Bug, href: "/employee/bugs" },
+      { label: "Leaderboard", icon: Trophy, href: "/employee/leaderboard" },
     ],
   },
   tester: {
@@ -112,6 +116,7 @@ const NAV_CONFIG = {
         href: "/employee/testing",
       },
       { label: "Bugs", icon: Bug, href: "/employee/bugs" },
+      { label: "Leaderboard", icon: Trophy, href: "/employee/leaderboard" },
     ],
   },
 };
