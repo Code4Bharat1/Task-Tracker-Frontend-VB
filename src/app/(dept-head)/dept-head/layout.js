@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
+  ListTodo,
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import Avatar from "@/components/Avatar";
@@ -23,6 +24,7 @@ import AuthLoader from "@/components/AuthLoader";
 const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dept-head/dashboard" },
   { label: "Projects", icon: FolderKanban, href: "/dept-head/projects" },
+  { label: "Tasks", icon: ListTodo, href: "/dept-head/tasks" },
   { label: "Employee", icon: Users, href: "/dept-head/members" },
   { label: "Scoreboard", icon: BarChart3, href: "/dept-head/scoreboard" },
   { label: "Daily Logs", icon: BookCheck, href: "/dept-head/daily-logs" },

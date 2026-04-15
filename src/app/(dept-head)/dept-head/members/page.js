@@ -10,9 +10,14 @@ import {
   UserCog,
   Building2,
   UserPlus,
+  X,
+  Check,
+  Pencil,
+  Trash2,
+  Loader2,
   ChevronDown,
 } from "lucide-react";
-import { createUser, getUsers } from "@/services/userService";
+import { createUser, getUsers, updateUser, deleteUser } from "@/services/userService";
 import {
   TableSkeleton,
   FilterSkeleton,
@@ -60,11 +65,13 @@ function MembersSkeleton() {
 export default function DeptHeadMembers() {
   const router = useRouter();
   const { user } = useAuth();
-  const [showAdd, setShowAdd] = useState(false);
+  const [modal, setModal] = useState(null);
+  // null | {type: "add"} | {type: "edit", user} | {type: "delete", user}
   const [departments, setDepartments] = useState([]);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
 
   const loadData = useCallback(async () => {
@@ -96,8 +103,8 @@ export default function DeptHeadMembers() {
       console.error("Failed to load members:", err);
       setError(
         err?.response?.data?.error ||
-          err?.message ||
-          "Failed to load members. Please try again.",
+        err?.message ||
+        "Failed to load members. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -111,9 +118,66 @@ export default function DeptHeadMembers() {
   const filtered = members.filter((m) => {
     return (
       m.name.toLowerCase().includes(search.toLowerCase()) ||
+      m.email?.toLowerCase().includes(search.toLowerCase()) ||
       (m.departmentName || "").toLowerCase().includes(search.toLowerCase())
     );
   });
+
+  // ── Modals Handlers
+  async function handleSave(form) {
+    try {
+      setSaving(true);
+      if (modal.type === "add") {
+        const payload = {
+          ...form,
+          departmentId: form.departmentId || user?.departmentId,
+        };
+        const created = await createUser(payload);
+        // Build the departmentName for the new member
+        const dept = departments.find(
+          (d) => String(d._id) === String(created.departmentId),
+        );
+        const enriched = {
+          ...created,
+          departmentName: dept ? dept.departmentName : null,
+        };
+        setMembers((prev) => [enriched, ...prev]);
+      } else if (modal.type === "edit") {
+        const updated = await updateUser(modal.user._id, form);
+        // Build the departmentName for the updated member
+        const dept = departments.find(
+          (d) => String(d._id) === String(updated.departmentId),
+        );
+        const enriched = {
+          ...updated,
+          departmentName: dept ? dept.departmentName : null,
+        };
+        setMembers((prev) =>
+          prev.map((m) => (m._id === modal.user._id ? enriched : m)),
+        );
+      }
+      setModal(null);
+    } catch (err) {
+      console.error("Save failed:", err);
+      setError("Failed to save employee changes.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    try {
+      setSaving(true);
+      await deleteUser(modal.user._id);
+      setMembers((prev) => prev.filter((m) => m._id !== modal.user._id));
+      setModal(null);
+    } catch (err) {
+      console.error("Delete failed:", err);
+      setError("Failed to delete employee.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const deptHeads = filtered.filter(
     (m) => m.globalRole === "department_head",
@@ -144,7 +208,7 @@ export default function DeptHeadMembers() {
             </p>
           </div>
           <button
-            onClick={() => setShowAdd(true)}
+            onClick={() => setModal({ type: "add" })}
             className="flex items-center gap-2 px-4 py-2.5 bg-primary text-on-primary text-[11px] tracking-[0.15em] uppercase font-bold hover:bg-primary/90 transition-colors"
           >
             <UserPlus className="w-3.5 h-3.5" />
@@ -207,7 +271,23 @@ export default function DeptHeadMembers() {
                     </p>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-1 shrink-0">
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setModal({ type: "edit", user: m })}
+                      className="p-1.5 text-foreground-muted hover:text-foreground transition-colors"
+                      title="Edit"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setModal({ type: "delete", user: m })}
+                      className="p-1.5 text-foreground-muted hover:text-[#ff4747] transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                   <RoleBadge role={m.globalRole} />
                   <span
                     className={`text-[10px] tracking-[0.08em] uppercase font-bold ${m.isActive !== false ? "text-[#47ff8a]" : "text-foreground-muted"}`}
@@ -224,8 +304,8 @@ export default function DeptHeadMembers() {
       {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto">
         <div className="border border-outline bg-surface-low overflow-hidden min-w-135">
-          <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 px-6 py-3 border-b border-outline bg-surface-container">
-            {["Member", "Department", "Role", "Status"].map((h) => (
+          <div className="grid grid-cols-[2fr_1fr_1fr_1fr_80px] gap-4 px-6 py-3 border-b border-outline bg-surface-container">
+            {["Member", "Department", "Role", "Status", ""].map((h) => (
               <span
                 key={h}
                 className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted font-bold"
@@ -247,7 +327,7 @@ export default function DeptHeadMembers() {
               {filtered.map((m) => (
                 <div
                   key={m._id}
-                  className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 px-6 py-4 items-center hover:bg-surface-container transition-colors"
+                  className="grid grid-cols-[2fr_1fr_1fr_1fr_80px] gap-4 px-6 py-4 items-center hover:bg-surface-container transition-colors group"
                 >
                   {/* Name */}
                   <div className="flex items-center gap-3 min-w-0">
@@ -279,6 +359,23 @@ export default function DeptHeadMembers() {
                   >
                     {m.isActive !== false ? "Active" : "Inactive"}
                   </span>
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => setModal({ type: "edit", user: m })}
+                      className="p-1.5 text-foreground-muted hover:text-foreground hover:bg-[#1a1a1a] transition-colors"
+                      title="Edit"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setModal({ type: "delete", user: m })}
+                      className="p-1.5 text-foreground-muted hover:text-[#ff4747] hover:bg-red-500/5 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -292,82 +389,112 @@ export default function DeptHeadMembers() {
           {members.length !== 1 ? "s" : ""}
         </p>
       )}
-      {showAdd && (
-        <AddEmployeeModal
+      {/* Modals */}
+      {modal?.type === "add" && (
+        <EmployeeModal
+          mode="add"
           departments={departments}
-          onClose={() => setShowAdd(false)}
-          onSaved={(created) => {
-            if (created && created._id) {
-              const createdDeptKey =
-                typeof created.departmentId === "object"
-                  ? String(created.departmentId._id ?? created.departmentId)
-                  : String(created.departmentId ?? "");
-              const deptName =
-                departments.find((d) => String(d._id) === createdDeptKey)
-                  ?.departmentName || null;
-              const enriched = { ...created, departmentName: deptName };
-              setMembers((prev) => [enriched, ...prev]);
-            } else {
-              loadData();
-            }
-          }}
-          defaultDepartmentId={user?.departmentId}
+          saving={saving}
+          onClose={() => setModal(null)}
+          onSave={handleSave}
+        />
+      )}
+      {modal?.type === "edit" && (
+        <EmployeeModal
+          mode="edit"
+          initial={modal.user}
+          departments={departments}
+          saving={saving}
+          onClose={() => setModal(null)}
+          onSave={handleSave}
+        />
+      )}
+      {modal?.type === "delete" && (
+        <DeleteModal
+          user={modal.user}
+          saving={saving}
+          onClose={() => setModal(null)}
+          onConfirm={handleDelete}
         />
       )}
     </div>
   );
 }
 
-function AddEmployeeModal({
-  departments,
-  onClose,
-  onSaved,
-  defaultDepartmentId,
-}) {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    globalRole: "employee",
-    departmentId: defaultDepartmentId ?? "",
-  });
-  useEffect(() => {
-    if (defaultDepartmentId)
-      setForm((f) => ({ ...f, departmentId: defaultDepartmentId }));
-  }, [defaultDepartmentId]);
-  const [saving, setSaving] = useState(false);
+// ─── Constants ───────────────────────────────────────────────
+const GLOBAL_ROLES = [
+  { value: "department_head", label: "Dept Head" },
+  { value: "employee", label: "Employee" },
+];
+
+// Helper to display department name nicely
+function displayDept(deptName) {
+  if (!deptName) return "—";
+  return deptName.toUpperCase();
+}
+
+// ─── Form Field Wrapper ───────────────────────────────────────
+function Field({ label, error, children }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-[11px] font-semibold uppercase tracking-wider text-foreground-muted">
+        {label}
+      </label>
+      {children}
+      {error && <p className="text-[11px] text-[#ff4747]">{error}</p>}
+    </div>
+  );
+}
+
+// ─── Add / Edit Modal ─────────────────────────────────────────
+function EmployeeModal({ mode, initial, departments, onClose, onSave, saving }) {
+  const [form, setForm] = useState(
+    initial
+      ? {
+          name: initial.name,
+          email: initial.email,
+          globalRole: initial.globalRole,
+          departmentId: (typeof initial.departmentId === 'object' ? initial.departmentId?._id : initial.departmentId) ?? "",
+          isActive: initial.isActive !== false,
+        }
+      : {
+          name: "",
+          email: "",
+          globalRole: "employee",
+          departmentId: "",
+          isActive: true,
+        },
+  );
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    return () => (document.body.style.overflow = "");
-  }, []);
+    function handleKey(e) {
+      if (e.key === "Escape" && !saving) onClose();
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, [onClose, saving]);
 
   function validate() {
     const e = {};
     if (!form.name.trim()) e.name = "Name is required";
     if (!form.email.trim()) e.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      e.email = "Invalid email";
+      e.email = "Invalid email address";
     return e;
   }
 
-  async function handleSubmit() {
+  function handleSubmit() {
     const e = validate();
-    if (Object.keys(e).length) return setErrors(e);
-    try {
-      setSaving(true);
-      const payload = {
-        ...form,
-        departmentId: form.departmentId || defaultDepartmentId,
-      };
-      const created = await createUser(payload);
-      onSaved && onSaved(created);
-      onClose();
-    } catch {
-      setErrors({ submit: "Failed to add employee" });
-    } finally {
-      setSaving(false);
+    if (Object.keys(e).length) {
+      setErrors(e);
+      return;
     }
+    onSave(form);
   }
 
   return (
@@ -377,64 +504,185 @@ function AddEmployeeModal({
         onClick={!saving ? onClose : undefined}
       />
       <div className="relative w-full max-w-md bg-surface-low border border-outline shadow-2xl">
+        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-outline">
           <span className="text-[11px] tracking-[0.2em] uppercase font-bold text-foreground">
-            Add Employee
+            {mode === "add" ? "Add New Employee" : "Edit Employee"}
           </span>
           <button
             onClick={onClose}
             disabled={saving}
-            className="text-foreground-muted hover:text-foreground transition-colors"
+            className="text-foreground-muted hover:text-foreground transition-colors disabled:opacity-40"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
 
+        {/* Body */}
         <div className="px-6 py-5 space-y-4">
-          <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-foreground-muted">
-              Full Name
-            </label>
+          <Field label="Full Name" error={errors.name}>
             <input
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full bg-surface-container border border-outline px-3 py-2.5 text-[12px]"
+              placeholder="John Doe"
+              className="w-full bg-surface-container border border-outline px-3 py-2.5 text-[12px] text-foreground placeholder-foreground-muted focus:outline-none focus:border-primary transition-colors"
             />
-            {errors.name && (
-              <p className="text-[11px] text-[#ff4747]">{errors.name}</p>
-            )}
-          </div>
-          <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-foreground-muted">
-              Email
-            </label>
+          </Field>
+
+          <Field label="Email Address" error={errors.email}>
             <input
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full bg-surface-container border border-outline px-3 py-2.5 text-[12px]"
+              placeholder="john@company.com"
+              className="w-full bg-surface-container border border-outline px-3 py-2.5 text-[12px] text-foreground placeholder-foreground-muted focus:outline-none focus:border-primary transition-colors"
             />
-            {errors.email && (
-              <p className="text-[11px] text-[#ff4747]">{errors.email}</p>
-            )}
+          </Field>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Role">
+              <div className="relative">
+                <select
+                  value={form.globalRole}
+                  onChange={(e) =>
+                    setForm({ ...form, globalRole: e.target.value })
+                  }
+                  className="w-full appearance-none bg-surface-container border border-outline px-3 py-2.5 pr-8 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors cursor-pointer"
+                >
+                  {GLOBAL_ROLES.map(({ value, label }) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-foreground-muted pointer-events-none" />
+              </div>
+            </Field>
+
+            <Field label="Department">
+              <div className="relative">
+                <select
+                  value={form.departmentId}
+                  onChange={(e) =>
+                    setForm({ ...form, departmentId: e.target.value })
+                  }
+                  className="w-full appearance-none bg-surface-container border border-outline px-3 py-2.5 pr-8 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors cursor-pointer"
+                >
+                  <option value="">None</option>
+                  {(departments ?? []).map((d) => (
+                    <option key={d._id} value={d._id}>
+                      {displayDept(d.departmentName)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-foreground-muted pointer-events-none" />
+              </div>
+            </Field>
           </div>
 
-          {/* Dept-head creates employees for their department; no project role here */}
+          <Field label="Status">
+            <div className="flex gap-2">
+              {[
+                { value: true, label: "Active" },
+                { value: false, label: "Inactive" },
+              ].map(({ value, label }) => (
+                <button
+                  key={label}
+                  onClick={() => setForm({ ...form, isActive: value })}
+                  className={`flex-1 py-2 text-[11px] tracking-[0.12em] uppercase font-bold border transition-colors ${
+                    form.isActive === value
+                      ? value
+                        ? "bg-primary/10 border-primary/40 text-primary"
+                        : "bg-[#ff4747]/10 border-[#ff4747]/40 text-[#ff4747]"
+                      : "border-outline text-foreground-muted hover:border-foreground-muted"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </Field>
         </div>
 
+        {/* Footer */}
         <div className="flex gap-2 px-6 pb-5">
           <button
             onClick={onClose}
             disabled={saving}
-            className="flex-1 py-2.5 text-[11px] uppercase font-bold border border-outline text-foreground-muted"
+            className="flex-1 py-2.5 text-[11px] tracking-[0.15em] uppercase font-bold border border-outline text-foreground-muted hover:text-foreground hover:border-foreground-muted transition-colors disabled:opacity-40"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="flex-1 py-2.5 text-[11px] uppercase font-bold bg-primary text-on-primary"
+            className="flex-1 py-2.5 text-[11px] tracking-[0.15em] uppercase font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
           >
-            {saving ? "Adding…" : "Add Employee"}
+            {saving ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Check className="w-3.5 h-3.5" />
+            )}
+            {mode === "add" ? "Add Employee" : "Save Changes"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Delete Modal ─────────────────────────────────────────────
+function DeleteModal({ user, onClose, onConfirm, saving }) {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    function handleKey(e) {
+      if (e.key === "Escape" && !saving) onClose();
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, [onClose, saving]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={!saving ? onClose : undefined}
+      />
+      <div className="relative w-full max-w-sm bg-surface-low border border-outline shadow-2xl p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 bg-[#ff4747]/10 border border-[#ff4747]/20 flex items-center justify-center">
+            <Trash2 className="w-4 h-4 text-[#ff4747]" />
+          </div>
+          <span className="text-[11px] tracking-[0.2em] uppercase font-bold text-foreground">
+            Delete Employee
+          </span>
+        </div>
+        <p className="text-[12px] text-foreground-muted mb-1">
+          You are about to delete:
+        </p>
+        <p className="text-[13px] font-bold text-foreground mb-2">
+          {user.name}
+        </p>
+        <p className="text-[11px] text-foreground-muted mb-5">
+          This action cannot be undone.
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="flex-1 py-2.5 text-[11px] tracking-[0.15em] uppercase font-bold border border-outline text-foreground-muted hover:text-foreground hover:border-foreground-muted transition-colors disabled:opacity-40"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={saving}
+            className="flex-1 py-2.5 text-[11px] tracking-[0.15em] uppercase font-bold bg-[#ff4747] text-foreground hover:bg-[#e03d3d] transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+          >
+            {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            Delete
           </button>
         </div>
       </div>

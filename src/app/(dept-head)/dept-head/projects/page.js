@@ -428,7 +428,7 @@ function ProjectModal({ mode, initial, users, onClose, onSave, saving }) {
           </Field>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Project Managers">
+            <Field label="LEAD">
               <MultiSelectDropdown
                 users={(users || []).filter((u) => {
                   const id = String(u._id || u.id || "");
@@ -471,7 +471,7 @@ function ProjectModal({ mode, initial, users, onClose, onSave, saving }) {
                 placeholder="Unassigned"
               />
             </Field>
-            <Field label="Testers">
+            <Field label="Reviewer">
               <MultiSelectDropdown
                 users={(users || []).filter((u) => {
                   const id = String(u._id || u.id || "");
@@ -516,7 +516,7 @@ function ProjectModal({ mode, initial, users, onClose, onSave, saving }) {
             </Field>
           </div>
 
-          <Field label="Developers (select multiple)">
+          <Field label="Contributor (select multiple)">
             <div className="relative mb-1.5">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-foreground-muted" />
               <input
@@ -946,7 +946,7 @@ export default function DeptHeadProjects() {
               Project
             </span>
             <span className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted font-bold">
-              Manager / Tester / Developer
+              LEAD / Reviewer / Contributor
             </span>
             {showProgress && (
               <span className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted font-bold">
@@ -996,17 +996,17 @@ export default function DeptHeadProjects() {
                     {/* Manager / Tester / Developer */}
                     <div>
                       <p className="text-[10px] text-foreground-muted">
-                        Project Manager:{" "}
+                        Lead:{" "}
                         {p.managerNames?.length
                           ? p.managerNames.join(", ")
                           : "—"}
                       </p>
                       <p className="text-[10px] text-foreground-muted">
-                        Tester:{" "}
+                        Reviewer:{" "}
                         {p.testerNames?.length ? p.testerNames.join(", ") : "—"}
                       </p>
                       <p className="text-[10px] text-foreground-muted">
-                        Developer:{" "}
+                      Contributor:{" "}
                         {p.developerNames?.length
                           ? p.developerNames.join(", ")
                           : "—"}

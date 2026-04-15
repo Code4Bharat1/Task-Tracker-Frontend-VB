@@ -260,7 +260,7 @@ export default function ScoreboardPage() {
           <div className="flex items-center gap-2">
             <Bug className="w-3.5 h-3.5 text-[#ff4747]" />
             <span className="text-foreground-muted">
-              Open Bugs: -5 pts each (max -30)
+              Issues: -5 pts each (max -30)
             </span>
           </div>
           <div className="flex items-center gap-2">
