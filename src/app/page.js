@@ -10,6 +10,7 @@ import FeaturesSection from "@/components/Landing/FeaturesSection";
 import DashboardPanelsSection from "@/components/Landing/DashboardPanelsSection";
 import TestimonialsSection from "@/components/Landing/TestimonialsSection";
 import FAQSection from "@/components/Landing/FAQSection";
+import Footer from "@/components/Landing/Footer";
 
 export default function Home() {
   const router = useRouter();
@@ -36,6 +37,7 @@ export default function Home() {
         {/* FAQ */}
         <FAQSection />
       </div>
+      <Footer />
     </div>
   );
 }
