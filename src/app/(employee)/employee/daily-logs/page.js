@@ -14,6 +14,9 @@ import {
   Trash2,
   ChevronDown,
   Clock,
+  Mic,
+  Folder,
+  SmilePlus,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import AuthLoader from "@/components/AuthLoader";
@@ -441,15 +444,33 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
                   <label className="block text-[10px] tracking-[0.12em] uppercase text-foreground-muted mb-1">
                     Description *
                   </label>
-                  <textarea
-                    value={item.description}
-                    onChange={(e) =>
-                      updateWorkItem(index, "description", e.target.value)
-                    }
-                    rows={3}
-                    placeholder="What did you work on?"
-                    className="w-full bg-surface-low border border-outline px-3 py-2 text-[12px] text-foreground placeholder-foreground-muted focus:outline-none focus:border-primary resize-none"
-                  />
+                  <div className="relative group">
+                    <div className="absolute left-3 bottom-3 flex items-center gap-2.5 z-10">
+                      <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                      <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
+                        <SmilePlus className="w-3.5 h-3.5" />
+                      </button>
+                      <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
+                        <Folder className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <textarea
+                      value={item.description}
+                      onChange={(e) =>
+                        updateWorkItem(index, "description", e.target.value)
+                      }
+                      rows={3}
+                      placeholder="What did you work on?"
+                      className="w-full bg-surface-low border border-outline pl-24 pr-10 py-2.5 text-[12px] text-foreground placeholder-foreground-muted focus:outline-none focus:border-primary transition-colors resize-none min-h-[90px]"
+                    />
+                    <div className="absolute right-3 bottom-3 z-10">
+                      <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
+                        <Mic className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Per-item Screenshot — temporarily commented out */}

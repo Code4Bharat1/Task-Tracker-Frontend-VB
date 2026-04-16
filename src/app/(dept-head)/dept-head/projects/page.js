@@ -17,6 +17,9 @@ import {
   ArrowRight,
   Users,
   Calendar,
+  Mic,
+  Folder,
+  SmilePlus,
 } from "lucide-react";
 import { ProjectsSkeleton } from "@/components/skeletons";
 import { DatePicker } from "@/components/DatePicker";
@@ -399,15 +402,33 @@ function ProjectModal({ mode, initial, users, onClose, onSave, saving }) {
           </Field>
 
           <Field label="Description">
-            <textarea
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-              rows={2}
-              placeholder="Brief project description…"
-              className="w-full bg-surface-container border border-outline px-3 py-2.5 text-[12px] text-foreground placeholder-foreground-muted focus:outline-none focus:border-primary transition-colors resize-none"
-            />
+            <div className="relative group">
+              <div className="absolute left-3 bottom-3 flex items-center gap-2.5 z-10">
+                <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
+                  <Plus className="w-4 h-4" />
+                </button>
+                <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
+                  <SmilePlus className="w-4 h-4" />
+                </button>
+                <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
+                  <Folder className="w-4 h-4" />
+                </button>
+              </div>
+              <textarea
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+                rows={3}
+                placeholder="Brief project description…"
+                className="w-full bg-surface-container border border-outline pl-24 pr-10 py-2.5 text-[12px] text-foreground placeholder-foreground-muted focus:outline-none focus:border-primary transition-colors resize-none min-h-[100px]"
+              />
+              <div className="absolute right-3 bottom-3 z-10">
+                <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
+                  <Mic className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </Field>
 
           <Field label="Status">

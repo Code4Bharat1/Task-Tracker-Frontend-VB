@@ -17,6 +17,9 @@ import {
   Calendar,
   Filter,
   Users,
+  Mic,
+  Folder,
+  SmilePlus,
 } from "lucide-react";
 import { ProjectsSkeleton } from "@/components/skeletons";
 import {
@@ -232,15 +235,33 @@ function TaskModal({
             </Field>
 
             <Field label="Description">
-              <textarea
-                value={form.description}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
-                rows={3}
-                placeholder="Details about the task…"
-                className="w-full bg-surface-container border border-outline px-3 py-2.5 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors resize-none"
-              />
+              <div className="relative group">
+                <div className="absolute left-3 bottom-3 flex items-center gap-2.5 z-10">
+                  <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
+                    <Plus className="w-4 h-4" />
+                  </button>
+                  <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
+                    <SmilePlus className="w-4 h-4" />
+                  </button>
+                  <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
+                    <Folder className="w-4 h-4" />
+                  </button>
+                </div>
+                <textarea
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
+                  rows={4}
+                  placeholder="Details about the task…"
+                  className="w-full bg-surface-container border border-outline pl-24 pr-10 py-2.5 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors resize-none min-h-[120px]"
+                />
+                <div className="absolute right-3 bottom-3 z-10">
+                  <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
+                    <Mic className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
