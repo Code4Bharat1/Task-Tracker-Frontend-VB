@@ -65,7 +65,7 @@ const FEATURES = [
     accent: "#adc6ff",
     tag: "Security",
     title: "Secure by Design",
-    desc: "Per-company data isolation, short-lived JWT tokens, and role-based access control out of the box.",
+    desc: "Per-company data isolation, industry-standard security practices, and role-based access control out of the box.",
   },
 ];
 
