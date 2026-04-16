@@ -741,9 +741,12 @@ function ProjectCard({ project, onEdit, onDelete, onViewMembers }) {
 
       {/* Footer: show members count only; card click opens members drawer */}
       <div className="flex items-center justify-between pt-2 border-t border-outline">
-        <span className="text-[11px] text-foreground-muted">
-          {project.members?.length || 0} devs
-        </span>
+        <div className="flex items-center gap-1.5 text-foreground-muted">
+          <Users className="w-3.5 h-3.5" />
+          <span className="text-[12px] font-bold text-[#47c8ff]">
+            {project.members?.length || 0}
+          </span>
+        </div>
         <span className="text-[11px] text-foreground-muted opacity-60">
           &nbsp;
         </span>
@@ -1178,9 +1181,12 @@ export default function ProjectsOverview() {
                     <StatusBadge status={p.status} />
 
                     {/* Members count */}
-                    <span className="text-[11px] text-foreground-muted">
-                      {p.members?.length || 0} devs
-                    </span>
+                    <div className="flex items-center gap-1.5 text-foreground-muted">
+                      <Users className="w-3.5 h-3.5" />
+                      <span className="text-[12px] font-bold text-[#47c8ff]">
+                        {p.members?.length || 0}
+                      </span>
+                    </div>
                   </button>
                 );
               })}

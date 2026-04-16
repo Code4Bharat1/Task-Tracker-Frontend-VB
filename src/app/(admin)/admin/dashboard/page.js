@@ -144,6 +144,12 @@ export default function AdminDashboard() {
 
   const stats = [
     {
+      icon: Users,
+      label: "Departments",
+      value: depts.length,
+      color: "text-[#47ff8a]",
+    },
+    {
       icon: FolderKanban,
       label: "Active Projects",
       value: activeProjects.length,
@@ -156,22 +162,16 @@ export default function AdminDashboard() {
       color: "text-[#47c8ff]",
     },
     {
-      icon: Bug,
-      label: "Issues",
-      value: openBugs.length,
-      color: "text-[#ff4747]",
-    },
-    {
       icon: Clock,
       label: "Logs Today",
       value: todayLogs.length,
       color: "text-[#e8a847]",
     },
     {
-      icon: Users,
-      label: "Departments",
-      value: depts.length,
-      color: "text-[#47ff8a]",
+      icon: Bug,
+      label: "Issues",
+      value: openBugs.length,
+      color: "text-[#ff4747]",
     },
   ];
 
@@ -448,7 +448,7 @@ export default function AdminDashboard() {
                     <div>
                       <p className="text-[12px] text-foreground">{t.title}</p>
                       <p className="text-[11px] text-foreground-muted">
-                        {t.projectName || t.projectId}
+                        {t.created_by?.name || t.created_by || "Admin"}
                       </p>
                     </div>
                     <span

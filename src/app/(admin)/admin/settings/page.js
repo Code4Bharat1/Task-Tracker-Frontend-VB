@@ -234,11 +234,10 @@ export default function SettingsPage() {
               <button
                 key={full}
                 onClick={() => toggleDay(full)}
-                className={`flex-1 py-2 text-[10px] tracking-[0.1em] uppercase font-bold border transition-colors ${
-                  form.workingDays.includes(full)
-                    ? "bg-primary/10 border-primary/40 text-primary"
-                    : "border-outline text-foreground-muted hover:border-foreground-muted"
-                }`}
+                className={`flex-1 py-2 text-[10px] tracking-[0.1em] uppercase font-bold border transition-colors ${form.workingDays.includes(full)
+                  ? "bg-primary/10 border-primary/40 text-primary"
+                  : "border-outline text-foreground-muted hover:border-foreground-muted"
+                  }`}
               >
                 {short}
               </button>
@@ -296,14 +295,10 @@ export default function SettingsPage() {
                   value={t}
                   onChange={(e) => {
                     const updated = [...form.logDeadlines];
-                    // Native <input type="time"> already emits HH:MM (24-hour).
-                    // Don't normalize here — it would reset the field to "00:00"
-                    // while the user is mid-edit (value is briefly "").
                     updated[i] = e.target.value;
                     setForm({ ...form, logDeadlines: updated });
                   }}
-                  className="appearance-auto bg-surface-container border border-outline px-3 py-2.5 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors [color-scheme:dark]"
-                />
+                  className="appearance-auto bg-surface-container border border-outline px-3 py-2.5 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors" />
                 {form.logDeadlines.length > 1 && (
                   <button
                     type="button"
@@ -349,7 +344,7 @@ export default function SettingsPage() {
               onChange={(e) =>
                 setForm({ ...form, defaultTaskDeadline: e.target.value })
               }
-              className="w-full bg-surface-container border border-outline px-3 py-2.5 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors [color-scheme:dark]"
+              className="appearance-auto bg-surface-container border border-outline px-3 py-2.5 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors"
             />
           </Field>
           <Field
@@ -427,7 +422,7 @@ export default function SettingsPage() {
                       },
                     })
                   }
-                  className="w-16 bg-surface-low border border-outline px-2 py-1 text-[12px] text-foreground text-center focus:outline-none focus:border-primary transition-colors"
+                  className="w-16 bg-surface-low border border-outline px-2 py-1 text-[12px] text-foreground text-center focus:outline-none focus:border-primary transition-colors input-number-themed"
                 />
               </div>
             ))}

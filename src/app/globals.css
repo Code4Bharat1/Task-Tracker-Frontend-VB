@@ -32,6 +32,7 @@
 ----------------------------- */
 
 :root {
+  color-scheme: light;
   /* base surfaces */
   --surface: #f6f7f9;
   --surface-low: #ffffff;
@@ -60,6 +61,7 @@
 ----------------------------- */
 
 .dark {
+  color-scheme: dark;
   /* surfaces */
   --surface: #131313;
   --surface-low: #1c1b1b;

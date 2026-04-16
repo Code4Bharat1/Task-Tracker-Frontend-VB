@@ -95,7 +95,7 @@ export default function AdminTasksPage() {
                       {t.title}
                     </p>
                     <p className="text-[11px] text-foreground-muted mt-0.5">
-                      {t.projectName || t.projectId}
+                      {t.created_by?.name || t.created_by || "Admin"}
                     </p>
                     {t.adminNote && editingNoteId !== (t._id ?? t.id) && (
                       <p className="text-[11px] text-foreground-muted italic mt-2">
