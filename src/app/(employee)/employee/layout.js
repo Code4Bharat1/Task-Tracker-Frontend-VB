@@ -18,11 +18,13 @@ import {
   ChevronRight,
   Menu,
   Trophy,
+  FileText,
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import Avatar from "@/components/Avatar";
 import { useAuth } from "@/lib/auth/context";
 import AuthLoader from "@/components/AuthLoader";
+import { getMyProjects } from "@/services/projectService";
 
 /* ── Role-specific nav configs ─────────────────────────────── */
 const NAV_CONFIG = {
@@ -59,6 +61,7 @@ const NAV_CONFIG = {
       },
       { label: "Projects", icon: FolderKanban, href: "/employee/projects" },
       { label: "Tasks", icon: CheckSquare, href: "/employee/tasks" },
+      { label: "Reports", icon: FileText, href: "/employee/reports" },
       {
         label: "Daily Logs",
         icon: ClipboardList,
@@ -128,6 +131,7 @@ export default function EmployeeLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, loading, logout } = useAuth();
+  const [isManager, setIsManager] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -141,13 +145,92 @@ export default function EmployeeLayout({ children }) {
       router.replace("/login");
     }
   }, [user, loading, router]);
+  // Compute role info and setup nav state BEFORE any early return so hooks order is stable
+  const rawRole = (user?.role || user?.globalRole || "")
+    .toString()
+    .toLowerCase();
+  let roleKey = "employee";
+  if (NAV_CONFIG[rawRole]) {
+    roleKey = rawRole;
+  } else if (rawRole.includes("lead")) {
+    // Map any lead-like role (team_lead, lead, lead_engineer) to Project Manager view
+    roleKey = "project_manager";
+  } else if (rawRole === "project manager" || rawRole === "project_manager") {
+    roleKey = "project_manager";
+  }
+  const config = NAV_CONFIG[roleKey] ?? NAV_CONFIG.employee;
+  const SidebarIcon = config.icon;
+  // Normalize user role for fine-grained checks (role or globalRole)
+  const userRoleNormalized = (user?.role || user?.globalRole || "")
+    .toString()
+    .toLowerCase();
+  const canSeeReports =
+    userRoleNormalized === "project_manager" ||
+    userRoleNormalized === "project manager" ||
+    userRoleNormalized.includes("lead");
+
+  // Start with the configured items. We'll inject Reports if role or manager status allows it.
+  const navItemsBase = [...(config.items || [])];
+  const [navItemsInjected] = useState(() => navItemsBase);
+
+  useEffect(() => {
+    let mounted = true;
+    async function checkManager() {
+      if (!user) return;
+      try {
+        const projs = await getMyProjects();
+        if (!mounted) return;
+        // If any project has managerId equal to current user, mark as manager
+        const manages =
+          Array.isArray(projs) &&
+          projs.some((p) => {
+            return (
+              (p.managerId && String(p.managerId) === String(user._id)) ||
+              (p.managerIds &&
+                p.managerIds.map(String).includes(String(user._id)))
+            );
+          });
+        if (typeof window !== "undefined") {
+          // eslint-disable-next-line no-console
+          console.log("[Sidebar] my-projects:", projs, "manages:", manages);
+        }
+        setIsManager(!!manages);
+      } catch (e) {
+        // ignore
+      }
+    }
+    checkManager();
+    return () => (mounted = false);
+  }, [user]);
 
   if (loading || !user) return <AuthLoader />;
 
-  const role = ALLOWED_ROLES.includes(user?.role) ? user.role : "employee";
-  const config = NAV_CONFIG[role] ?? NAV_CONFIG.employee;
-  const SidebarIcon = config.icon;
-  const navItems = config.items;
+  const canSeeReportsFinal = canSeeReports || isManager;
+  const navItems = [...navItemsInjected];
+  if (
+    canSeeReportsFinal &&
+    !navItems.some((i) => i.href === "/employee/reports")
+  ) {
+    const insertAt = Math.min(3, navItems.length);
+    navItems.splice(insertAt, 0, {
+      label: "Reports",
+      icon: FileText,
+      href: "/employee/reports",
+    });
+  }
+
+  // Debugging aid: print resolved role and nav items
+  if (typeof window !== "undefined") {
+    // eslint-disable-next-line no-console
+    console.log(
+      "[Sidebar] userRole:",
+      user?.role || user?.globalRole,
+      "roleKey:",
+      roleKey,
+      "nav:",
+      navItems.map((i) => i.href),
+    );
+  }
 
   function handleLogout() {
     logout();
@@ -268,6 +351,15 @@ export default function EmployeeLayout({ children }) {
             </button>
             <span className="text-[10px] tracking-[0.2em] uppercase text-foreground-muted">
               {config.breadcrumb}
+            </span>
+            <span className="ml-3 text-[10px] text-foreground-muted">
+              Role: {user?.role || user?.globalRole || "-"}
+            </span>
+            <span className="ml-3 text-[10px] text-foreground-muted">
+              Reports:{" "}
+              {navItems.some((i) => i.href === "/employee/reports")
+                ? "visible"
+                : "hidden"}
             </span>
             <span className="text-foreground-muted">/</span>
             <span className="text-[10px] tracking-[0.2em] uppercase text-primary">

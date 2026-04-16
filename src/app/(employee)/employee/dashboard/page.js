@@ -77,26 +77,32 @@ export default function EmployeeDashboard() {
   const { user, loading } = useAuth();
 
   useEffect(() => {
-    if (
-      !loading &&
-      (!user ||
-        !["employee", "project_manager", "developer", "tester"].includes(
-          user?.role,
-        ))
-    ) {
-      router.replace("/login");
+    if (!loading) {
+      const r = ((user?.role || user?.globalRole || "") + "").toLowerCase();
+      const allowed = ["employee", "project_manager", "developer", "tester"];
+      const isAllowed =
+        !!user &&
+        (allowed.includes(r) ||
+          r.includes("lead") ||
+          r === "project manager" ||
+          r === "project_manager");
+      if (!isAllowed) router.replace("/login");
     }
   }, [user, loading, router]);
 
   if (loading || !user) return <AuthLoader />;
 
+  const r = ((user?.role || user?.globalRole || "") + "").toLowerCase();
   const ROLE_LABEL = {
     project_manager: "Project Manager",
     developer: "Developer",
     tester: "Tester",
     employee: "Employee",
   };
-  const roleLabel = ROLE_LABEL[user.role] ?? "Employee";
+  const roleLabel =
+    r.includes("lead") || r === "project_manager" || r === "project manager"
+      ? "Project Manager"
+      : (ROLE_LABEL[user.role] ?? "Employee");
 
   return (
     <div className="space-y-6">
