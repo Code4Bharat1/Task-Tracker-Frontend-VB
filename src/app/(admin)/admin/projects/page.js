@@ -123,15 +123,15 @@ function ProjectModal({ mode, initial, onClose, onSave, saving }) {
   const [form, setForm] = useState(
     initial
       ? {
-          name: initial.name,
-          department: initial.department,
-          manager: initial.manager,
-          managerId: initial.managerId,
-          tester: initial.tester,
-          testerId: initial.testerId ?? null,
-          status: initial.status,
-          deadline: initial.deadline,
-        }
+        name: initial.name,
+        department: initial.department,
+        manager: initial.manager,
+        managerId: initial.managerId,
+        tester: initial.tester,
+        testerId: initial.testerId ?? null,
+        status: initial.status,
+        deadline: initial.deadline,
+      }
       : EMPTY_FORM,
   );
   const [errors, setErrors] = useState({});
@@ -156,8 +156,8 @@ function ProjectModal({ mode, initial, onClose, onSave, saving }) {
         if (!mounted) return;
         setEmployees(u || []);
       })
-      .catch(() => {})
-      .finally(() => {});
+      .catch(() => { })
+      .finally(() => { });
     return () => {
       mounted = false;
     };

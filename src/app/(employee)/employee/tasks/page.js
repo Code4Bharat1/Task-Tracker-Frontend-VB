@@ -18,6 +18,7 @@ import {
   getTasks,
   getMyTasks,
   advanceTaskStatus,
+  startTesterReview,
   TASK_STATUS_META,
   TASK_STATUSES,
   TASK_PRIORITY_META,
@@ -48,6 +49,16 @@ function PriorityBadge({ priority }) {
   );
 }
 
+function formatDateTime(d) {
+  if (!d) return "—";
+  return new Date(d).toLocaleTimeString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function formatDate(d) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-US", {
@@ -73,7 +84,7 @@ export default function TasksPage() {
     if (
       !loading &&
       (!user ||
-        !["employee", "project_manager", "developer"].includes(user?.role))
+        !["employee", "project_manager", "developer", "tester"].includes(user?.role))
     ) {
       router.replace("/login");
     }
@@ -114,7 +125,7 @@ export default function TasksPage() {
   }, [loadData]);
 
   async function handleAdvance(task) {
-    const advanceable = ["TODO", "IN_PROGRESS"];
+    const advanceable = ["TODO", "IN_PROGRESS", "IN_REVIEW"];
     if (!advanceable.includes(task.status)) return;
     try {
       setAdvancing(task._id);
@@ -138,7 +149,7 @@ export default function TasksPage() {
     byStatus[s] = tasks.filter((t) => t.status === s).length;
   });
 
-  const roleLabel = isPM ? "Project Manager" : "Developer";
+  const roleLabel = isPM ? "Project Manager" : user?.role === "tester" ? "Tester" : "Developer";
   const pageTitle = isPM ? "All Tasks" : "My Tasks";
 
   return (
@@ -161,25 +172,25 @@ export default function TasksPage() {
 
       {/* Status Summary */}
       {!dataLoading && (
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-          {TASK_STATUSES.map((s) => {
+        <div className="grid grid-cols-2 gap-2">
+          {TASK_STATUSES.filter(s => !["TODO", "REJECTED"].includes(s)).map((s) => {
             const meta = TASK_STATUS_META[s];
             return (
               <button
                 key={s}
                 onClick={() => setStatusFilter(statusFilter === s ? "ALL" : s)}
-                className={`px-3 py-2.5 border text-center transition-colors ${
+                className={`px-3 py-4 border text-center transition-all duration-200 ${
                   statusFilter === s
-                    ? `${meta.border} ${meta.bg} ${meta.color}`
-                    : "border-outline text-foreground-muted hover:border-foreground-muted"
+                    ? `${meta.border} ${meta.bg} shadow-lg shadow-current/5 scale-[1.02]`
+                    : `${meta.border}/30 ${meta.bg}/30 hover:bg-surface-high grayscale-[0.4] hover:grayscale-0`
                 }`}
               >
                 <p
-                  className={`text-lg font-bold ${statusFilter === s ? meta.color : "text-foreground"}`}
+                  className={`text-2xl font-bold ${meta.color}`}
                 >
                   {byStatus[s]}
                 </p>
-                <p className="text-[8px] tracking-[0.1em] uppercase mt-0.5">
+                <p className={`text-[9px] tracking-[0.15em] uppercase mt-1 font-bold ${meta.color} opacity-80`}>
                   {meta.label}
                 </p>
               </button>
@@ -212,13 +223,9 @@ export default function TasksPage() {
       ) : (
         <div className="border border-outline bg-surface-low divide-y divide-outline">
           {filtered.map((task) => {
-            const contributors = task.contributors || [];
-            const reviewers = task.reviewers || [];
-            const isContributor = contributors.some(
-              (c) => (c.userId?._id || c.userId) === user._id,
-            );
             const canAdvance =
-              isContributor && ["TODO", "IN_PROGRESS"].includes(task.status);
+              (["TODO", "IN_PROGRESS"].includes(task.status)) ||
+              (task.status === "IN_REVIEW");
 
             return (
               <div
@@ -240,42 +247,62 @@ export default function TasksPage() {
                   <div className="flex items-center gap-3 flex-wrap">
                     {isPM && projectMap[task.projectId] && (
                       <span className="text-[10px] text-foreground-muted">
-                        {projectMap[task.projectId]}
-                      </span>
-                    )}
-                    {contributors.length > 0 && (
-                      <span className="text-[10px] text-foreground-muted">
-                        Contributors:{" "}
-                        {contributors
-                          .map((c) => c.userId?.name || "—")
-                          .join(", ")}
+                        Project: {projectMap[task.projectId]}
                       </span>
                     )}
                     {task.deadline && (
                       <span className="flex items-center gap-1 text-[10px] text-foreground-muted">
                         <Calendar className="w-3 h-3" />
-                        {formatDate(task.deadline)}
+                        Deadline: {formatDate(task.deadline)}
                       </span>
+                    )}
+                  </div>
+
+                  {/* Timing Details */}
+                  <div className="grid grid-cols-2 gap-4 mt-4 pt-3 border-t border-outline/30">
+                    {task.developerStartedAt && (
+                      <div className="flex flex-col">
+                        <span className="text-[7px] uppercase tracking-[0.15em] text-foreground-muted mb-1 font-bold">Dev Start</span>
+                        <span className="text-[10px] text-foreground font-medium">{formatDateTime(task.developerStartedAt)}</span>
+                      </div>
+                    )}
+                    {task.developerFinishedAt && (
+                      <div className="flex flex-col">
+                        <span className="text-[7px] uppercase tracking-[0.15em] text-foreground-muted mb-1 font-bold">Dev Finish</span>
+                        <span className="text-[10px] text-foreground font-medium">{formatDateTime(task.developerFinishedAt)}</span>
+                      </div>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <StatusBadge status={task.status} />
-                  {canAdvance && (
-                    <button
-                      disabled={advancing === task._id}
-                      onClick={() => handleAdvance(task)}
-                      className="flex items-center gap-1 px-2 py-1.5 border border-primary/30 text-primary hover:bg-primary/10 text-[9px] tracking-[0.1em] uppercase font-bold transition-colors disabled:opacity-50"
-                    >
-                      {advancing === task._id ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <ChevronRight className="w-3 h-3" />
-                      )}
-                      {task.status === "TODO" ? "Start" : "Submit Review"}
-                    </button>
-                  )}
+                <div className="flex flex-col items-end justify-between gap-3 shrink-0">
+                  {/* Action Buttons Replace the Badge for active tasks */}
+                  <div className="flex flex-col items-end gap-2">
+                    {task.status === "TODO" && (
+                      <button
+                        onClick={() => handleAdvance(task)}
+                        disabled={advancing === task._id}
+                        className="px-6 py-2 bg-primary text-on-primary rounded-full text-[11px] tracking-[0.1em] uppercase font-bold hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 disabled:opacity-50"
+                      >
+                        {advancing === task._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Start Task"}
+                      </button>
+                    )}
+
+                    {task.status === "IN_PROGRESS" && (
+                      <button
+                        onClick={() => handleAdvance(task)}
+                        disabled={advancing === task._id}
+                        className="px-6 py-2 bg-[#10b981] text-white rounded-full text-[11px] tracking-[0.1em] uppercase font-bold hover:shadow-lg hover:shadow-[#10b981]/20 transition-all active:scale-95 disabled:opacity-50"
+                      >
+                        {advancing === task._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Mark Complete"}
+                      </button>
+                    )}
+
+                    {/* Show badge only for final or rejected statuses, or if PM view */}
+                    {(["DONE", "REJECTED"].includes(task.status) || isPM) && (
+                      <StatusBadge status={task.status} />
+                    )}
+                  </div>
                 </div>
               </div>
             );

@@ -35,7 +35,16 @@ import { getProjects } from "@/services/projectService";
 import { getUsers } from "@/services/userService";
 // DatePicker removed — using native datetime-local inputs
 
-// ─── Helpers ─────────────────────────────────────────────────
+function formatDateTime(d) {
+  if (!d) return "—";
+  return new Date(d).toLocaleTimeString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function formatDate(d) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-US", {
@@ -697,11 +706,24 @@ export default function DeptHeadTasks() {
                   <div>
                     <PriorityBadge priority={t.priority} />
                   </div>
-                  <div className="flex items-center gap-1.5 text-foreground-muted">
-                    <Calendar className="w-3 h-3" />
-                    <span className="text-[12px]">
-                      {formatDate(t.deadline)}
-                    </span>
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-1.5 text-foreground-muted">
+                      <Calendar className="w-3 h-3" />
+                      <span className="text-[12px]">
+                        {formatDate(t.deadline)}
+                      </span>
+                    </div>
+                    {/* Timing Highlights */}
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2 pt-2 border-t border-outline/20">
+                      <div className="flex flex-col">
+                        <span className="text-[7px] uppercase text-foreground-muted font-bold tracking-wider">Dev Start</span>
+                        <span className="text-[9px] text-foreground">{formatDateTime(t.developerStartedAt)}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[7px] uppercase text-foreground-muted font-bold tracking-wider">Dev Finish</span>
+                        <span className="text-[9px] text-foreground">{formatDateTime(t.developerFinishedAt)}</span>
+                      </div>
+                    </div>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button

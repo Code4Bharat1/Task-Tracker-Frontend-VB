@@ -25,7 +25,6 @@ import api from "@/lib/api";
 export const TASK_STATUSES = [
   "TODO",
   "IN_PROGRESS",
-  "IN_REVIEW",
   "DONE",
   "REJECTED",
 ];
@@ -63,21 +62,14 @@ export const TASK_STATUS_META = {
     label: "In Progress",
     color: "text-[#47c8ff]",
     bg: "bg-[#47c8ff]/10",
-    border: "border-[#47c8ff]/20",
-    next: "IN_REVIEW",
-  },
-  IN_REVIEW: {
-    label: "In Review",
-    color: "text-[#e8a847]",
-    bg: "bg-[#e8a847]/10",
-    border: "border-[#e8a847]/20",
+    border: "border-[#47c8ff]/30",
     next: "DONE",
   },
   DONE: {
     label: "Done",
-    color: "text-[#47ff8a]",
-    bg: "bg-[#47ff8a]/10",
-    border: "border-[#47ff8a]/20",
+    color: "text-[#10b981]",
+    bg: "bg-[#10b981]/10",
+    border: "border-[#10b981]/30",
     next: null,
   },
   REJECTED: {
@@ -151,6 +143,14 @@ export async function assignTask(id, { contributors, reviewers }) {
  */
 export async function advanceTaskStatus(id) {
   const { data } = await api.patch(`/tasks/${id}/advance`);
+  return data.task ?? data;
+}
+
+/**
+ * Start tester review timing — PATCH /tasks/:id/start-review
+ */
+export async function startTesterReview(id) {
+  const { data } = await api.patch(`/tasks/${id}/start-review`);
   return data.task ?? data;
 }
 

@@ -65,6 +65,8 @@ const DEFAULT_FORM = {
     taskMissed: -5,
     dailyLogOnTime: 1,
     dailyLogMissed: -2,
+    absentees: -5,
+    discipline: -10,
   },
 };
 
@@ -400,6 +402,16 @@ export default function SettingsPage() {
               {
                 key: "dailyLogMissed",
                 label: "Daily Log Missed",
+                color: "text-[#ff4747]",
+              },
+              {
+                key: "absentees",
+                label: "Absentees",
+                color: "text-[#ff4747]",
+              },
+              {
+                key: "discipline",
+                label: "Discipline",
                 color: "text-[#ff4747]",
               },
             ].map(({ key, label, color }) => (

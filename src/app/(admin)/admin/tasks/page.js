@@ -8,6 +8,16 @@ import { useAuth } from "@/lib/auth/context";
 import { getTasks, updateTask } from "@/services/taskService";
 import { TableSkeleton } from "@/components/skeletons";
 
+function formatDateTime(d) {
+  if (!d) return "—";
+  return new Date(d).toLocaleTimeString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function AdminTasksPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -113,6 +123,18 @@ export default function AdminTasksPage() {
                         />
                       </div>
                     )}
+
+                    {/* Timing Details */}
+                    <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-outline/30">
+                      <div className="flex flex-col">
+                        <span className="text-[8px] uppercase tracking-wider text-foreground-muted mb-0.5">Dev Start</span>
+                        <span className="text-[10px] text-foreground whitespace-nowrap">{formatDateTime(t.developerStartedAt)}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[8px] uppercase tracking-wider text-foreground-muted mb-0.5">Dev Finish</span>
+                        <span className="text-[10px] text-foreground whitespace-nowrap">{formatDateTime(t.developerFinishedAt)}</span>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2">

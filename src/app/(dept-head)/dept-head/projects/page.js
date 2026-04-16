@@ -90,7 +90,8 @@ const EMPTY_FORM = {
   testerNames: [],
   developerIds: [],
   developerNames: [],
-  deadline: "",
+  startDate: "",
+  endDate: "",
 };
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -282,7 +283,8 @@ function ProjectModal({ mode, initial, users, onClose, onSave, saving }) {
           testerNames: initial.testerNames || [],
           developerIds: initial.developerIds || [],
           developerNames: initial.developerNames || [],
-          deadline: initial.deadline || "",
+          startDate: initial.startDate || "",
+          endDate: initial.endDate || "",
         }
       : EMPTY_FORM,
   );
@@ -304,7 +306,8 @@ function ProjectModal({ mode, initial, users, onClose, onSave, saving }) {
   function validate() {
     const e = {};
     if (!form.name.trim()) e.name = "Project name is required";
-    if (!form.deadline) e.deadline = "Deadline is required";
+    if (!form.startDate) e.startDate = "Start date is required";
+    if (!form.endDate) e.endDate = "End date is required";
     return e;
   }
 
@@ -583,12 +586,20 @@ function ProjectModal({ mode, initial, users, onClose, onSave, saving }) {
             </div>
           </Field>
 
-          <Field label="Deadline" error={errors.deadline}>
-            <DatePicker
-              value={form.deadline}
-              onChange={(deadline) => setForm({ ...form, deadline })}
-            />
-          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Start Date" error={errors.startDate}>
+              <DatePicker
+                value={form.startDate}
+                onChange={(startDate) => setForm({ ...form, startDate })}
+              />
+            </Field>
+            <Field label="End Date" error={errors.endDate}>
+              <DatePicker
+                value={form.endDate}
+                onChange={(endDate) => setForm({ ...form, endDate })}
+              />
+            </Field>
+          </div>
         </div>
 
         <div className="flex gap-2 px-6 pb-5 pt-2">
@@ -975,7 +986,7 @@ export default function DeptHeadProjects() {
               </span>
             )}
             <span className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted font-bold">
-              Deadline
+              Timeline
             </span>
             <span className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted font-bold"></span>
           </div>
@@ -1051,12 +1062,16 @@ export default function DeptHeadProjects() {
                         </div>
                       </div>
                     )}
-                    {/* Deadline */}
-                    <div className="flex items-center gap-1.5 text-foreground-muted">
-                      <Calendar className="w-3 h-3" />
-                      <span className="text-[12px]">
-                        {formatDate(p.deadline)}
-                      </span>
+                    {/* Timeline */}
+                    <div className="flex flex-col gap-0.5 min-w-[120px]">
+                      <div className="flex items-center gap-1.5 text-foreground-muted">
+                        <span className="text-[8px] uppercase font-bold opacity-60">Start:</span>
+                        <span className="text-[11px]">{formatDate(p.startDate)}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-foreground-muted">
+                        <span className="text-[8px] uppercase font-bold opacity-60">End:</span>
+                        <span className="text-[11px]">{formatDate(p.endDate)}</span>
+                      </div>
                     </div>
                     {/* Actions */}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

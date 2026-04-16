@@ -115,6 +115,11 @@ const NAV_CONFIG = {
         href: "/employee/projects",
       },
       {
+        label: "Tasks",
+        icon: CheckSquare,
+        href: "/employee/tasks",
+      },
+      {
         label: "Test Cases",
         icon: ShieldCheck,
         href: "/employee/testing",
