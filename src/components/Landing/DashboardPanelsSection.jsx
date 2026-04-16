@@ -131,7 +131,7 @@ const HIGHLIGHTS = [
   {
     icon: Lock,
     title: "Secure by design",
-    desc: "Per-company data isolation, role-based access control, and short-lived JWT tokens out of the box.",
+    desc: "Per-company data isolation, role-based access control, and industry-standard security practices to keep your data safe.",
   },
 ];
 
