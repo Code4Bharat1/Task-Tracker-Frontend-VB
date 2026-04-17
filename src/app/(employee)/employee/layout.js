@@ -358,15 +358,6 @@ export default function EmployeeLayout({ children }) {
             <span className="text-[10px] tracking-[0.2em] uppercase text-foreground-muted">
               {config.breadcrumb}
             </span>
-            <span className="ml-3 text-[10px] text-foreground-muted">
-              Role: {user?.role || user?.globalRole || "-"}
-            </span>
-            <span className="ml-3 text-[10px] text-foreground-muted">
-              Reports:{" "}
-              {navItems.some((i) => i.href === "/employee/reports")
-                ? "visible"
-                : "hidden"}
-            </span>
             <span className="text-foreground-muted">/</span>
             <span className="text-[10px] tracking-[0.2em] uppercase text-primary">
               {navItems.find(

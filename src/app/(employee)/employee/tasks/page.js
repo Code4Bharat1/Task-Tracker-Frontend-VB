@@ -662,7 +662,8 @@ function LeadTasksPageInner() {
                     <div className="min-w-0">
                       <p className="text-[13px] font-semibold text-foreground truncate">{t.title}</p>
                       <div className="mt-0.5 flex items-center gap-2 flex-wrap">
-                        <StatusBadge status={t.status} />
+                        {/* Hide TO DO status badge for employees, show others */}
+                        {!isLead && t.status === "TODO" ? null : <StatusBadge status={t.status} />}
                         {/* Advance button for non-lead employees */}
                         {!isLead && ["TODO", "IN_PROGRESS"].includes(t.status) && (
                           <button
@@ -672,7 +673,7 @@ function LeadTasksPageInner() {
                           >
                             {advancing === t._id
                               ? <Loader2 className="w-3 h-3 animate-spin inline" />
-                              : t.status === "TODO" ? "Start" : "Complete"}
+                              : t.status === "TODO" ? "START" : "FINISH"}
                           </button>
                         )}
                       </div>
