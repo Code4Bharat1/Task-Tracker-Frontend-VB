@@ -33,7 +33,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [permissions, setPermissions] = useState(DEFAULT_PERMS);
 
-  async function loadPermissions(role, companyId) {
+  async function loadPermissions(role) {
     // Admin always has full access — no need to fetch
     if (role === "admin" || role === "super_admin") {
       setPermissions(DEFAULT_PERMS);
@@ -41,13 +41,19 @@ export function AuthProvider({ children }) {
     }
     try {
       const { data } = await api.get("/companies/permissions/roles");
-      const roleKey = role === "department_head" ? "department_head" : "employee";
+      // Map role to the correct key in rolePermissions
+      let roleKey;
+      if (role === "department_head") roleKey = "department_head";
+      else if (role === "lead") roleKey = "lead";
+      else roleKey = "employee";
+
       const rolePerms = data?.rolePermissions?.[roleKey];
       if (rolePerms) {
         setPermissions({ ...DEFAULT_PERMS, ...rolePerms });
+      } else {
+        setPermissions(DEFAULT_PERMS);
       }
     } catch {
-      // fallback to defaults
       setPermissions(DEFAULT_PERMS);
     }
   }
@@ -71,7 +77,7 @@ export function AuthProvider({ children }) {
         if (u && !u.role && u.globalRole) u.role = u.globalRole;
         if (u && !u._id && u.id) u._id = u.id;
         setUser(u);
-        return loadPermissions(u.role || u.globalRole, u.companyId);
+        return loadPermissions(u.role || u.globalRole);
       })
       .catch(() => {
         localStorage.removeItem("hasSession");
@@ -94,7 +100,7 @@ export function AuthProvider({ children }) {
       if (u && !u.role && u.globalRole) u.role = u.globalRole;
       if (u && !u._id && u.id) u._id = u.id;
       setUser(u);
-      await loadPermissions(u.role || u.globalRole, u.companyId);
+      await loadPermissions(u.role || u.globalRole);
       localStorage.setItem("hasSession", "1");
       router.push(getRedirectPath(u.role));
       return { requirePasswordChange: false };
@@ -113,7 +119,7 @@ export function AuthProvider({ children }) {
   // Helper: check if current user can perform action on resource
   function can(resource, action) {
     const role = user?.role || user?.globalRole;
-    if (role === "admin" || role === "super_admin" || role === "lead") return true;
+    if (role === "admin" || role === "super_admin") return true;
     return permissions?.[resource]?.[action] ?? true;
   }
 
