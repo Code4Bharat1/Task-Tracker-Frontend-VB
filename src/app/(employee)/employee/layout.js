@@ -26,6 +26,16 @@ import { useAuth } from "@/lib/auth/context";
 import AuthLoader from "@/components/AuthLoader";
 import { getMyProjects } from "@/services/projectService";
 
+// Permission key mapping: nav href → resource key
+const NAV_PERMISSION_MAP = {
+  "/employee/projects": "projects",
+  "/employee/tasks":    "tasks",
+  "/employee/daily-logs": "dailyLogs",
+  "/employee/bugs":     "bugs",
+  "/employee/reports":  "reports",
+  "/employee/leaderboard": "leaderboard",
+};
+
 /* ── Role-specific nav configs ─────────────────────────────── */
 const NAV_CONFIG = {
   employee: {
@@ -135,7 +145,7 @@ const ALLOWED_ROLES = ["employee", "project_manager", "developer", "tester"];
 export default function EmployeeLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, can } = useAuth();
   const [isManager, setIsManager] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -157,10 +167,9 @@ export default function EmployeeLayout({ children }) {
   let roleKey = "employee";
   if (NAV_CONFIG[rawRole]) {
     roleKey = rawRole;
-  } else if (rawRole.includes("lead")) {
-    // Map any lead-like role (team_lead, lead, lead_engineer) to Project Manager view
+  } else if (rawRole === "lead" || rawRole.includes("lead")) {
     roleKey = "project_manager";
-  } else if (rawRole === "project manager" || rawRole === "project_manager") {
+  } else if (rawRole === "project_manager") {
     roleKey = "project_manager";
   }
   const config = NAV_CONFIG[roleKey] ?? NAV_CONFIG.employee;
@@ -211,9 +220,14 @@ export default function EmployeeLayout({ children }) {
   if (loading || !user) return <AuthLoader />;
 
   const canSeeReportsFinal = canSeeReports || isManager;
-  const navItems = [...navItemsInjected];
+  const navItems = [...navItemsInjected].filter((item) => {
+    const resource = NAV_PERMISSION_MAP[item.href];
+    if (!resource) return true; // dashboard and others always visible
+    return can(resource, "read");
+  });
   if (
     canSeeReportsFinal &&
+    can("reports", "read") &&
     !navItems.some((i) => i.href === "/employee/reports")
   ) {
     const insertAt = Math.min(3, navItems.length);
@@ -222,19 +236,6 @@ export default function EmployeeLayout({ children }) {
       icon: FileText,
       href: "/employee/reports",
     });
-  }
-
-  // Debugging aid: print resolved role and nav items
-  if (typeof window !== "undefined") {
-    // eslint-disable-next-line no-console
-    console.log(
-      "[Sidebar] userRole:",
-      user?.role || user?.globalRole,
-      "roleKey:",
-      roleKey,
-      "nav:",
-      navItems.map((i) => i.href),
-    );
   }
 
   function handleLogout() {

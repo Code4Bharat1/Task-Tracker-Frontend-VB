@@ -423,10 +423,6 @@ function MembersDrawer({ dept, onClose }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log("this are departments");
-    console.log(members);
-  }, [members]);
-  useEffect(() => {
     getDepartmentMembers(dept._id)
       .then((m) => {
         const filtered = (m ?? []).filter(

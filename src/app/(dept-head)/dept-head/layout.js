@@ -22,6 +22,13 @@ import Avatar from "@/components/Avatar";
 import { useAuth } from "@/lib/auth/context";
 import AuthLoader from "@/components/AuthLoader";
 
+const NAV_PERMISSION_MAP = {
+  "/dept-head/projects":   "projects",
+  "/dept-head/tasks":      "tasks",
+  "/dept-head/bugs":       "bugs",
+  "/dept-head/daily-logs": "dailyLogs",
+};
+
 const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dept-head/dashboard" },
   { label: "Projects", icon: FolderKanban, href: "/dept-head/projects" },
@@ -35,7 +42,7 @@ const NAV_ITEMS = [
 export default function DeptHeadLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, can } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -55,6 +62,12 @@ export default function DeptHeadLayout({ children }) {
   }, [user, loading, router]);
 
   if (loading || !user) return <AuthLoader />;
+
+  const filteredNav = NAV_ITEMS.filter((item) => {
+    const resource = NAV_PERMISSION_MAP[item.href];
+    if (!resource) return true;
+    return can(resource, "read");
+  });
 
   return (
     <div className="flex h-screen overflow-hidden bg-surface font-sans">
@@ -92,7 +105,7 @@ export default function DeptHeadLayout({ children }) {
 
         {/* Nav */}
         <nav className="flex flex-col gap-1 px-2 pt-4 flex-1">
-          {NAV_ITEMS.map(({ label, icon: Icon, href }) => {
+          {filteredNav.map(({ label, icon: Icon, href }) => {
             const isActive =
               pathname === href || pathname.startsWith(href + "/");
             return (
@@ -172,7 +185,7 @@ export default function DeptHeadLayout({ children }) {
             </span>
             <span className="text-foreground-muted">/</span>
             <span className="text-[10px] tracking-[0.2em] uppercase text-primary">
-              {NAV_ITEMS.find(
+              {filteredNav.find(
                 (i) => pathname === i.href || pathname.startsWith(i.href + "/"),
               )?.label ?? "Dashboard"}
             </span>

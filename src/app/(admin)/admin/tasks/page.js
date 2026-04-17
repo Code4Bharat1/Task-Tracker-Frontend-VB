@@ -40,7 +40,7 @@ export default function AdminTasksPage() {
       setDataLoading(true);
       try {
         const resp = await getTasks();
-        const data = Array.isArray(resp) ? resp : (resp?.data ?? resp ?? []);
+        const data = Array.isArray(resp) ? resp : (resp?.data ?? []);
         if (mounted) setTasksArr(data);
       } catch (e) {
         console.error("Failed to load tasks", e);

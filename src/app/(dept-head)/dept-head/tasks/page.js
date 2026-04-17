@@ -20,6 +20,7 @@ import {
   Mic,
   Folder,
   SmilePlus,
+  FileText,
 } from "lucide-react";
 import { ProjectsSkeleton } from "@/components/skeletons";
 import {
@@ -27,6 +28,7 @@ import {
   createTask,
   updateTask,
   deleteTask,
+  uploadTaskAttachment,
   TASK_STATUS_META,
   TASK_PRIORITY_META,
   TASK_STATUSES,
@@ -131,6 +133,8 @@ function TaskModal({
   );
   const [errors, setErrors] = useState({});
   const [userSearch, setUserSearch] = useState("");
+  const [attachFile, setAttachFile] = useState(null);
+  const attachInputRef = useRef(null);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -176,14 +180,14 @@ function TaskModal({
       setErrors(e);
       return;
     }
-    onSave(form);
+    onSave(form, attachFile);
   }
 
   const filteredUsers = (users || []).filter((u) => {
     const nameMatch = (u?.name || "")
       .toLowerCase()
       .includes(userSearch.toLowerCase());
-    return nameMatch;
+    return u?.globalRole === "employee" && nameMatch;
   });
 
   function toggleUser(userId, field) {
@@ -244,33 +248,57 @@ function TaskModal({
             </Field>
 
             <Field label="Description">
-              <div className="relative group">
-                <div className="absolute left-3 bottom-3 flex items-center gap-2.5 z-10">
-                  <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
+              <textarea
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+                rows={4}
+                placeholder="Details about the task…"
+                className="w-full bg-surface-container border border-outline px-3 py-2.5 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors resize-none min-h-[120px]"
+              />
+              {/* Toolbar below textarea */}
+              <div className="flex items-center justify-between px-2 py-1.5 bg-surface-container border border-t-0 border-outline">
+                <div className="flex items-center gap-3">
+                  <button type="button" title="Add item" className="text-foreground-muted hover:text-primary transition-colors">
                     <Plus className="w-4 h-4" />
                   </button>
-                  <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
+                  <button type="button" title="Add emoji" className="text-foreground-muted hover:text-primary transition-colors">
                     <SmilePlus className="w-4 h-4" />
                   </button>
-                  <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
+                  <button
+                    type="button"
+                    title="Attach file"
+                    onClick={() => attachInputRef.current?.click()}
+                    className="text-foreground-muted hover:text-primary transition-colors"
+                  >
                     <Folder className="w-4 h-4" />
                   </button>
+                  <input
+                    ref={attachInputRef}
+                    type="file"
+                    accept="image/*,.pdf,.docx"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) setAttachFile(f);
+                      e.target.value = "";
+                    }}
+                  />
                 </div>
-                <textarea
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
-                  rows={4}
-                  placeholder="Details about the task…"
-                  className="w-full bg-surface-container border border-outline pl-24 pr-10 py-2.5 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors resize-none min-h-[120px]"
-                />
-                <div className="absolute right-3 bottom-3 z-10">
-                  <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
-                    <Mic className="w-4 h-4" />
+                <button type="button" title="Voice input" className="text-foreground-muted hover:text-primary transition-colors">
+                  <Mic className="w-4 h-4" />
+                </button>
+              </div>
+              {attachFile && (
+                <div className="flex items-center gap-2 mt-1 px-2 py-1.5 bg-primary/10 border border-primary/20 text-[11px] text-primary">
+                  <FileText className="w-3 h-3 shrink-0" />
+                  <span className="truncate flex-1">{attachFile.name}</span>
+                  <button type="button" onClick={() => setAttachFile(null)} className="shrink-0 hover:text-foreground">
+                    <X className="w-3 h-3" />
                   </button>
                 </div>
-              </div>
+              )}
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
@@ -540,11 +568,13 @@ export default function DeptHeadTasks() {
     pending: tasks.filter((t) => t.status !== "DONE").length,
   };
 
-  async function handleAdd(form) {
+  async function handleAdd(form, attachFile) {
     try {
       setSaving(true);
       const created = await createTask(form.projectId, form);
-      // Backend might return task with populated project
+      if (attachFile && created?._id) {
+        try { await uploadTaskAttachment(created._id, attachFile); } catch { /* non-blocking */ }
+      }
       setTasks((prev) => [created, ...prev]);
       setModal(null);
     } catch (err) {
@@ -554,10 +584,13 @@ export default function DeptHeadTasks() {
     }
   }
 
-  async function handleEdit(form) {
+  async function handleEdit(form, attachFile) {
     try {
       setSaving(true);
       const updated = await updateTask(modal.task._id, form);
+      if (attachFile && modal.task._id) {
+        try { await uploadTaskAttachment(modal.task._id, attachFile); } catch { /* non-blocking */ }
+      }
       setTasks((prev) =>
         prev.map((t) => (t._id === modal.task._id ? updated : t)),
       );

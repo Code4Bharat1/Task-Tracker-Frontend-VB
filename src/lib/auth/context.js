@@ -13,19 +13,45 @@ import { getRedirectPath } from "@/lib/auth/utils";
 
 const AuthContext = createContext(null);
 
+// Default permissions — all true so existing behaviour is preserved
+// when no permissions are configured yet
+const DEFAULT_PERMS = {
+  projects:     { create: true, read: true, update: true, delete: true },
+  tasks:        { create: true, read: true, update: true, delete: true },
+  dailyLogs:    { create: true, read: true, update: true, delete: true },
+  bugs:         { create: true, read: true, update: true, delete: true },
+  reports:      { create: true, read: true, update: true, delete: true },
+  ktDocuments:  { create: true, read: true, update: true, delete: true },
+  leaderboard:  { create: false, read: true, update: false, delete: false },
+  activityLogs: { create: false, read: true, update: false, delete: false },
+  users:        { create: true, read: true, update: true, delete: true },
+};
+
 export function AuthProvider({ children }) {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  // const [user, setUser] = useState({
-  //   _id: "u3",
-  //   name: "Ali Hassan",
-  //   email: "ali@company.com",
-  //   role: "admin",
-  // }); // ✅ back to null
-  // const [loading, setLoading] = useState(false); // ✅ back to true
+  const [permissions, setPermissions] = useState(DEFAULT_PERMS);
 
-  // ✅ Real session restore — only attempt if user previously logged in
+  async function loadPermissions(role, companyId) {
+    // Admin always has full access — no need to fetch
+    if (role === "admin" || role === "super_admin") {
+      setPermissions(DEFAULT_PERMS);
+      return;
+    }
+    try {
+      const { data } = await api.get("/companies/permissions/roles");
+      const roleKey = role === "department_head" ? "department_head" : "employee";
+      const rolePerms = data?.rolePermissions?.[roleKey];
+      if (rolePerms) {
+        setPermissions({ ...DEFAULT_PERMS, ...rolePerms });
+      }
+    } catch {
+      // fallback to defaults
+      setPermissions(DEFAULT_PERMS);
+    }
+  }
+
   useEffect(() => {
     const hadSession =
       typeof window !== "undefined" && localStorage.getItem("hasSession");
@@ -42,11 +68,10 @@ export function AuthProvider({ children }) {
       })
       .then(({ data }) => {
         const u = data.user;
-        // normalize: backend may expose globalRole instead of role
         if (u && !u.role && u.globalRole) u.role = u.globalRole;
-        // normalize: backend returns id not _id
         if (u && !u._id && u.id) u._id = u.id;
         setUser(u);
+        return loadPermissions(u.role || u.globalRole, u.companyId);
       })
       .catch(() => {
         localStorage.removeItem("hasSession");
@@ -66,11 +91,10 @@ export function AuthProvider({ children }) {
       setAccessToken(data.accessToken);
       const { data: meData } = await api.get("/auth/me");
       const u = meData.user;
-      // normalize: backend may expose globalRole instead of role
       if (u && !u.role && u.globalRole) u.role = u.globalRole;
-      // normalize: backend returns id not _id
       if (u && !u._id && u.id) u._id = u.id;
       setUser(u);
+      await loadPermissions(u.role || u.globalRole, u.companyId);
       localStorage.setItem("hasSession", "1");
       router.push(getRedirectPath(u.role));
       return { requirePasswordChange: false };
@@ -82,11 +106,19 @@ export function AuthProvider({ children }) {
     clearAccessToken();
     localStorage.removeItem("hasSession");
     setUser(false);
+    setPermissions(DEFAULT_PERMS);
     router.replace("/login");
   }, [router]);
 
+  // Helper: check if current user can perform action on resource
+  function can(resource, action) {
+    const role = user?.role || user?.globalRole;
+    if (role === "admin" || role === "super_admin" || role === "lead") return true;
+    return permissions?.[resource]?.[action] ?? true;
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, setUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, setUser, permissions, can }}>
       {children}
     </AuthContext.Provider>
   );

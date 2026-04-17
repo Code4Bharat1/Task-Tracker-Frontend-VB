@@ -112,3 +112,23 @@ export async function updateTestingPhase(id, phaseIndex, status) {
   });
   return data?.project ?? data;
 }
+
+/**
+ * Upload SRS document for a project (department_head only)
+ * Real API → POST /projects/:id/srs
+ */
+export async function uploadProjectSrs(id, file) {
+  const form = new FormData();
+  form.append("file", file);
+  const { data } = await api.post(`/projects/${id}/srs`, form);
+  return data?.project ?? data;
+}
+
+/**
+ * Delete SRS document from a project (department_head only)
+ * Real API → DELETE /projects/:id/srs
+ */
+export async function deleteProjectSrs(id) {
+  const { data } = await api.delete(`/projects/${id}/srs`);
+  return data?.project ?? data;
+}

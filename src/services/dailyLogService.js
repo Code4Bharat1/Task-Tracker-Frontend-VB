@@ -37,3 +37,11 @@ export async function deleteLog(id) {
   const { data } = await api.delete(`/daily-logs/${id}`);
   return data;
 }
+
+// Upload screenshot for a log entry – POST /daily-logs/:id/entries/:entryId/screenshot
+export async function uploadEntryScreenshot(logId, entryId, file) {
+  const form = new FormData();
+  form.append("screenshot", file);
+  const { data } = await api.post(`/daily-logs/${logId}/entries/${entryId}/screenshot`, form);
+  return data.log ?? data;
+}

@@ -17,7 +17,7 @@ export default function EmployeeSettingsPage() {
   useEffect(() => {
     if (user) {
       setName(user.name || "");
-      setPreview(user.profilePhoto || null);
+      setPreview(user.profilePic?.url || null);
     }
   }, [user]);
 

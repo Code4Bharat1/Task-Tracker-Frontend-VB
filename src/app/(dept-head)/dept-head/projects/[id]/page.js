@@ -11,10 +11,12 @@ import {
   AlertCircle,
   Upload,
   FileText,
+  Loader2,
 } from "lucide-react";
 import { getProject, updateProject } from "@/services/projectService";
 import { getTasks, TASK_STATUS_META } from "@/services/taskService";
 import { getUsers } from "@/services/userService";
+import { uploadProjectSrs, deleteProjectSrs } from "@/services/projectService";
 
 // ─── Status Meta ─────────────────────────────────────────────
 const PROJECT_STATUS_META = {
@@ -87,6 +89,7 @@ export default function ProjectDetailPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [srsUploading, setSrsUploading] = useState(false);
   const srsInputRef = useRef(null);
 
   const loadData = useCallback(async () => {
@@ -150,15 +153,28 @@ export default function ProjectDetailPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        const srsUrl = ev.target.result;
-        const updated = await updateProject(id, { srsUrl });
-        setProject((prev) => ({ ...prev, srsUrl: updated?.srsUrl || srsUrl }));
-      };
-      reader.readAsDataURL(file);
+      setSrsUploading(true);
+      setError(null);
+      const updated = await uploadProjectSrs(id, file);
+      setProject((prev) => ({ ...prev, srsDocument: updated?.srsDocument }));
     } catch {
-      setError("Failed to upload SRS.");
+      setError("Failed to upload SRS document.");
+    } finally {
+      setSrsUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  async function handleSrsDelete() {
+    try {
+      setSrsUploading(true);
+      setError(null);
+      const updated = await deleteProjectSrs(id);
+      setProject((prev) => ({ ...prev, srsDocument: updated?.srsDocument ?? { url: null, publicId: null } }));
+    } catch {
+      setError("Failed to delete SRS document.");
+    } finally {
+      setSrsUploading(false);
     }
   }
 
@@ -288,31 +304,44 @@ export default function ProjectDetailPage() {
           )}
         </div>
 
-        {/* SRS Document — temporarily commented out */}
-        {/* <div className="mt-4 pt-4 border-t border-outline flex items-center justify-between gap-4">
+        {/* SRS Document */}
+        <div className="mt-4 pt-4 border-t border-outline flex items-center justify-between gap-4">
           <div>
             <p className="text-[10px] tracking-[0.12em] uppercase text-foreground-muted mb-1">
               SRS Document
             </p>
-            {project.srsUrl ? (
-              <a
-                href={project.srsUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-[12px] text-primary hover:underline"
-              >
-                <FileText className="w-3.5 h-3.5" />
-                View SRS
-              </a>
+            {project.srsDocument?.url ? (
+              <div className="flex items-center gap-3">
+                <a
+                  href={project.srsDocument.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[12px] text-primary hover:underline"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  View SRS
+                </a>
+                <button
+                  onClick={handleSrsDelete}
+                  disabled={srsUploading}
+                  className="text-[11px] text-[#ff4747] hover:underline disabled:opacity-40"
+                >
+                  Remove
+                </button>
+              </div>
             ) : (
               <p className="text-[12px] text-foreground-muted">
                 No SRS uploaded
               </p>
             )}
           </div>
-          <label className="flex items-center gap-2 px-3 py-2 border border-outline text-[10px] tracking-[0.12em] uppercase font-bold text-foreground-muted hover:text-foreground hover:border-foreground-muted transition-colors cursor-pointer shrink-0">
-            <Upload className="w-3.5 h-3.5" />
-            Upload SRS
+          <label className={`flex items-center gap-2 px-3 py-2 border border-outline text-[10px] tracking-[0.12em] uppercase font-bold transition-colors cursor-pointer shrink-0 ${srsUploading ? "opacity-40 pointer-events-none" : "text-foreground-muted hover:text-foreground hover:border-foreground-muted"}`}>
+            {srsUploading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Upload className="w-3.5 h-3.5" />
+            )}
+            {srsUploading ? "Uploading..." : "Upload SRS"}
             <input
               ref={srsInputRef}
               type="file"
@@ -321,7 +350,7 @@ export default function ProjectDetailPage() {
               onChange={handleSrsUpload}
             />
           </label>
-        </div> */}
+        </div>
       </div>
 
       {/* Modules */}

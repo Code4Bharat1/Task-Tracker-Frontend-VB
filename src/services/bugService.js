@@ -101,25 +101,25 @@ export async function getAllBugs({ projectId, status, severity } = {}) {
   const { data } = await api.get("/bugs", {
     params: { projectId, status, severity },
   });
-  return data.bugs ?? [];
+  return data.data ?? data.bugs ?? [];
 }
 
 /**
- * Get bugs assigned to the current developer
- * Real API → GET /bugs/my-bugs
+ * Get bugs assigned to the current user
+ * Real API → GET /bugs?assignedTo=me (uses current user from token)
  */
 export async function getMyBugs() {
-  const { data } = await api.get("/bugs/my-bugs");
-  return data.bugs ?? [];
+  const { data } = await api.get("/bugs", { params: { assignedToMe: true } });
+  return data.data ?? data.bugs ?? [];
 }
 
 /**
- * Get bugs reported by the current tester
- * Real API → GET /bugs/reported-by-me
+ * Get bugs reported by the current user
+ * Real API → GET /bugs?reportedByMe=true
  */
 export async function getBugsReportedByMe() {
-  const { data } = await api.get("/bugs/reported-by-me");
-  return data.bugs ?? [];
+  const { data } = await api.get("/bugs", { params: { reportedByMe: true } });
+  return data.data ?? data.bugs ?? [];
 }
 
 /**

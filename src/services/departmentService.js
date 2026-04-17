@@ -34,7 +34,6 @@ import api from "@/lib/api";
  */
 export async function getDepartments() {
   const { data } = await api.get("/departments");
-  console.log("departments", data);
   return data.allDepartments ?? data.departments ?? [];
 }
 
@@ -44,7 +43,6 @@ export async function getDepartments() {
  */
 export async function getDepartmentMembers(departmentId) {
   const { data } = await api.get(`/departments/${departmentId}/members`);
-  console.log("Department members response:", data);
   return data.members ?? data.users ?? [];
 }
 
@@ -62,10 +60,8 @@ export async function createDepartment(payload) {
     body.name = payload.newHeadName.trim();
     body.email = payload.newHeadEmail.trim().toLowerCase();
   }
-  console.log(body);
 
   const { data } = await api.post("/departments", body);
-  // backend returns { departments: <dept_doc>, user: <head_user_doc> }
   return {
     department: data.departments ?? data.department ?? null,
     head: data.user ?? null,
@@ -90,18 +86,15 @@ export async function updateDepartment(id, payload) {
  */
 export async function assignDepartmentHead(departmentId, userId) {
   if (!userId) {
-    // If removing head, call server endpoint to clear head if available.
-    // Fallback: refetch department
     const { data } = await api.get(`/departments/${departmentId}`);
-    return data.depaartment ?? data.department;
+    return data.depaartment ?? data.department ?? null;
   }
-
   await api.patch(`/users/${userId}`, {
     globalRole: "department_head",
     departmentId,
   });
   const { data } = await api.get(`/departments/${departmentId}`);
-  return data.depaartment ?? data.department;
+  return data.depaartment ?? data.department ?? null;
 }
 
 /**

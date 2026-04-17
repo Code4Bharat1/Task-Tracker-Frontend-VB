@@ -20,6 +20,7 @@ import {
   Mic,
   Folder,
   SmilePlus,
+  FileText,
 } from "lucide-react";
 import { ProjectsSkeleton } from "@/components/skeletons";
 import { DatePicker } from "@/components/DatePicker";
@@ -28,6 +29,7 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  uploadProjectSrs,
 } from "@/services/projectService";
 import { getUsers } from "@/services/userService";
 
@@ -290,6 +292,8 @@ function ProjectModal({ mode, initial, users, onClose, onSave, saving }) {
   );
   const [errors, setErrors] = useState({});
   const [devSearch, setDevSearch] = useState("");
+  const [srsFile, setSrsFile] = useState(null);
+  const srsInputRef = useRef(null);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -355,7 +359,7 @@ function ProjectModal({ mode, initial, users, onClose, onSave, saving }) {
       setErrors(e);
       return;
     }
-    onSave(form);
+    onSave(form, srsFile);
   }
 
   // map id -> name for name lookups
@@ -413,9 +417,25 @@ function ProjectModal({ mode, initial, users, onClose, onSave, saving }) {
                 <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
                   <SmilePlus className="w-4 h-4" />
                 </button>
-                <button type="button" className="text-foreground-muted hover:text-primary transition-colors">
+                <button
+                  type="button"
+                  title="Attach SRS document"
+                  onClick={() => srsInputRef.current?.click()}
+                  className="text-foreground-muted hover:text-primary transition-colors"
+                >
                   <Folder className="w-4 h-4" />
                 </button>
+                <input
+                  ref={srsInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) setSrsFile(f);
+                    e.target.value = "";
+                  }}
+                />
               </div>
               <textarea
                 value={form.description}
@@ -432,6 +452,19 @@ function ProjectModal({ mode, initial, users, onClose, onSave, saving }) {
                 </button>
               </div>
             </div>
+            {srsFile && (
+              <div className="flex items-center gap-2 mt-1.5 px-2 py-1.5 bg-primary/10 border border-primary/20 text-[11px] text-primary">
+                <FileText className="w-3 h-3 shrink-0" />
+                <span className="truncate flex-1">{srsFile.name}</span>
+                <button
+                  type="button"
+                  onClick={() => setSrsFile(null)}
+                  className="shrink-0 hover:text-foreground transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
           </Field>
 
           <Field label="Status">
@@ -782,10 +815,16 @@ export default function DeptHeadProjects() {
     return matchSearch && matchStatus;
   });
 
-  async function handleAdd(form) {
+  async function handleAdd(form, srsFile) {
     try {
       setSaving(true);
       const newProject = await createProject(form);
+      // Upload SRS if selected
+      if (srsFile && newProject?._id) {
+        try {
+          await uploadProjectSrs(newProject._id, srsFile);
+        } catch { /* non-blocking */ }
+      }
       // Enrich with names from the already-loaded users list
       const idToName = Object.fromEntries(
         (users || []).map((u) => [String(u._id ?? u.id ?? ""), u.name]),
@@ -815,10 +854,16 @@ export default function DeptHeadProjects() {
     }
   }
 
-  async function handleEdit(form) {
+  async function handleEdit(form, srsFile) {
     try {
       setSaving(true);
       const updated = await updateProject(modal.project._id, form);
+      // Upload SRS if a new file was selected
+      if (srsFile && modal.project._id) {
+        try {
+          await uploadProjectSrs(modal.project._id, srsFile);
+        } catch { /* non-blocking */ }
+      }
       // Re-enrich the returned project with name arrays from current users list
       const idToName = Object.fromEntries(
         (users || []).map((u) => [String(u._id ?? u.id ?? ""), u.name]),

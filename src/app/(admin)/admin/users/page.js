@@ -26,6 +26,7 @@ import {
 // SRS §5.1 — Global roles only
 const GLOBAL_ROLES = [
   { value: "department_head", label: "Dept Head" },
+  { value: "lead", label: "Lead" },
   { value: "employee", label: "Employee" },
 ];
 
@@ -45,19 +46,12 @@ function displayDept(deptName) {
 // Helper to return label + className for a user role badge
 function roleBadge(role) {
   if (role === "admin")
-    return {
-      label: "Admin",
-      cls: "bg-[#ff4747]/10 text-[#ff4747] border-[#ff4747]/20",
-    };
+    return { label: "Admin", cls: "bg-[#ff4747]/10 text-[#ff4747] border-[#ff4747]/20" };
   if (role === "department_head")
-    return {
-      label: "Dept Head",
-      cls: "bg-[#47c8ff]/10 text-[#47c8ff] border-[#47c8ff]/20",
-    };
-  return {
-    label: "Employee",
-    cls: "bg-primary/10 text-primary border-primary/20",
-  };
+    return { label: "Dept Head", cls: "bg-[#47c8ff]/10 text-[#47c8ff] border-[#47c8ff]/20" };
+  if (role === "lead")
+    return { label: "Lead", cls: "bg-[#c847ff]/10 text-[#c847ff] border-[#c847ff]/20" };
+  return { label: "Employee", cls: "bg-primary/10 text-primary border-primary/20" };
 }
 
 // ─── Form Field Wrapper ───────────────────────────────────────

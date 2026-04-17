@@ -24,6 +24,7 @@ import { TableSkeleton } from "@/components/skeletons";
 import api from "@/lib/api";
 import { getMyProjects } from "@/services/projectService";
 import { getTasks } from "@/services/taskService";
+import { uploadEntryScreenshot } from "@/services/dailyLogService";
 import { List, AutoSizer } from "react-virtualized";
 import { DatePicker } from "@/components/DatePicker";
 
@@ -202,28 +203,16 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
     }
     try {
       setSaving(true);
-      const processedItems = await Promise.all(
-        validItems.map(async (item) => {
-          let screenshotUrl = "";
-          if (item.screenshotFile) {
-            screenshotUrl = await new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result);
-              reader.readAsDataURL(item.screenshotFile);
-            });
-          } else if (item.screenshotPreview?.startsWith("http")) {
-            screenshotUrl = item.screenshotPreview;
-          }
-          const { screenshotFile: _f, screenshotPreview: _p, ...rest } = item;
-          return { ...rest, screenshotUrl };
-        }),
-      );
+      const validItemsWithFiles = validItems.map((item) => {
+        const { screenshotFile, screenshotPreview, ...rest } = item;
+        return { ...rest, _screenshotFile: screenshotFile, _screenshotPreview: screenshotPreview };
+      });
 
+      let savedLog;
       if (isEdit && existing?._id) {
-        // Editing — replace the entries array on the existing log document
-        await api.patch(`/daily-logs/${existing._id}`, {
+        const { data } = await api.patch(`/daily-logs/${existing._id}`, {
           logDate: date,
-          entries: processedItems.map((item) => ({
+          entries: validItemsWithFiles.map((item) => ({
             projectId: item.projectId,
             taskId: item.taskId || null,
             description: item.description,
@@ -232,11 +221,11 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
             endTime: item.endTime || undefined,
           })),
         });
+        savedLog = data.log ?? data;
       } else {
-        // Creating — one document per day with all entries
-        await api.post("/daily-logs", {
+        const { data } = await api.post("/daily-logs", {
           logDate: date,
-          entries: processedItems.map((item) => ({
+          entries: validItemsWithFiles.map((item) => ({
             projectId: item.projectId,
             taskId: item.taskId || null,
             description: item.description,
@@ -245,7 +234,22 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
             endTime: item.endTime || undefined,
           })),
         });
+        savedLog = data.log ?? data;
       }
+
+      // Upload screenshots for entries that have a new file
+      const savedEntries = savedLog?.entries || [];
+      await Promise.all(
+        validItemsWithFiles.map(async (item, index) => {
+          if (item._screenshotFile && savedEntries[index]?._id) {
+            try {
+              await uploadEntryScreenshot(savedLog._id, savedEntries[index]._id, item._screenshotFile);
+            } catch {
+              /* non-blocking: screenshot upload failure doesn't fail the whole submit */
+            }
+          }
+        })
+      );
       await onSave();
       onClose();
     } catch (err) {

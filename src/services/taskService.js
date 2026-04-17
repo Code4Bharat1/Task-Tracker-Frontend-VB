@@ -86,7 +86,7 @@ export const TASK_STATUS_META = {
  */
 export async function getTasks(projectId, params = {}) {
   const { data } = await api.get("/tasks", {
-    params: { projectId, ...params },
+    params: { ...(projectId ? { projectId } : {}), ...params },
   });
   return data.data ?? data.tasks ?? (Array.isArray(data) ? data : []);
 }

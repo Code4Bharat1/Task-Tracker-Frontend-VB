@@ -70,6 +70,11 @@ const NAV_ITEMS = [
     icon: Settings,
     href: "/admin/settings",
   },
+  {
+    label: "Permissions",
+    icon: Shield,
+    href: "/admin/permissions",
+  },
 ];
 
 export default function AdminLayout({ children }) {
