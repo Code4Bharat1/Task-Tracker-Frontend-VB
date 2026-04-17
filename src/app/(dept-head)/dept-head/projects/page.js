@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import PermissionGuard from "@/components/PermissionGuard";
+import { useAuth } from "@/lib/auth/context";
 import {
   FolderKanban,
   Plus,
@@ -723,8 +725,9 @@ function DeleteModal({ project, onClose, onConfirm, saving }) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────
-export default function DeptHeadProjects() {
+function DeptHeadProjectsInner() {
   const router = useRouter();
+  const { can } = useAuth();
   const [projects, setProjects] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -939,13 +942,15 @@ export default function DeptHeadProjects() {
             Projects
           </h1>
         </div>
-        <button
-          onClick={() => setModal({ type: "add" })}
-          className="flex items-center gap-2 px-4 py-2.5 text-[11px] tracking-[0.15em] uppercase font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          New Project
-        </button>
+        {can("projects", "create") && (
+          <button
+            onClick={() => setModal({ type: "add" })}
+            className="flex items-center gap-2 px-4 py-2.5 text-[11px] tracking-[0.15em] uppercase font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            New Project
+          </button>
+        )}
       </div>
 
       {/* Stats */}
@@ -1120,26 +1125,30 @@ export default function DeptHeadProjects() {
                     </div>
                     {/* Actions */}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setModal({ type: "edit", project: p });
-                        }}
-                        className="p-1.5 text-foreground-muted hover:text-foreground transition-colors"
-                        title="Edit"
-                      >
-                        <Pencil className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setModal({ type: "delete", project: p });
-                        }}
-                        className="p-1.5 text-foreground-muted hover:text-[#ff4747] transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
+                      {can("projects", "update") && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setModal({ type: "edit", project: p });
+                          }}
+                          className="p-1.5 text-foreground-muted hover:text-foreground transition-colors"
+                          title="Edit"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      )}
+                      {can("projects", "delete") && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setModal({ type: "delete", project: p });
+                          }}
+                          className="p-1.5 text-foreground-muted hover:text-[#ff4747] transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -1185,5 +1194,13 @@ export default function DeptHeadProjects() {
         />
       )}
     </div>
+  );
+}
+
+export default function DeptHeadProjects() {
+  return (
+    <PermissionGuard resource="projects" action="read">
+      <DeptHeadProjectsInner />
+    </PermissionGuard>
   );
 }

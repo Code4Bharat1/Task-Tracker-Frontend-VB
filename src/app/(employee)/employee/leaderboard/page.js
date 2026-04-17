@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import PermissionGuard from "@/components/PermissionGuard";
 import {
   BarChart3,
   Trophy,
@@ -49,7 +50,7 @@ function MetricChip({ icon: Icon, label, value, color }) {
   );
 }
 
-export default function EmployeeLeaderboardPage() {
+function EmployeeLeaderboardPageInner() {
   const { user } = useAuth();
   const [data, setData] = useState([]);
   const [deptAvg, setDeptAvg] = useState(0);
@@ -272,5 +273,13 @@ export default function EmployeeLeaderboardPage() {
         daily logs.
       </p>
     </div>
+  );
+}
+
+export default function EmployeeLeaderboardPage() {
+  return (
+    <PermissionGuard resource="leaderboard" action="read">
+      <EmployeeLeaderboardPageInner />
+    </PermissionGuard>
   );
 }

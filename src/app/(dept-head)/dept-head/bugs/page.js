@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/context";
 import AuthLoader from "@/components/AuthLoader";
+import PermissionGuard from "@/components/PermissionGuard";
 import { getAllBugs } from "@/services/bugService";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
-export default function DeptHeadBugsPage() {
+function DeptHeadBugsPageInner() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [bugs, setBugs] = useState([]);
@@ -81,5 +82,13 @@ export default function DeptHeadBugsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DeptHeadBugsPage() {
+  return (
+    <PermissionGuard resource="bugs" action="read">
+      <DeptHeadBugsPageInner />
+    </PermissionGuard>
   );
 }

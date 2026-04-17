@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import PermissionGuard from "@/components/PermissionGuard";
 import {
   ClipboardList,
   Search,
@@ -129,7 +130,7 @@ function LogModal({ log, users, projects, onClose }) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────
-export default function DeptHeadDailyLogsPage() {
+function DeptHeadDailyLogsPageInner() {
   const [logs, setLogs] = useState([]);
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
@@ -389,5 +390,13 @@ export default function DeptHeadDailyLogsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function DeptHeadDailyLogsPage() {
+  return (
+    <PermissionGuard resource="dailyLogs" action="read">
+      <DeptHeadDailyLogsPageInner />
+    </PermissionGuard>
   );
 }

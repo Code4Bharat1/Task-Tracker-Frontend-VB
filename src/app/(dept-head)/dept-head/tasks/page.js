@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import PermissionGuard from "@/components/PermissionGuard";
+import { useAuth } from "@/lib/auth/context";
 import {
   ListTodo,
   Plus,
@@ -522,7 +524,8 @@ function DeleteModal({ task, onClose, onConfirm, saving }) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────
-export default function DeptHeadTasks() {
+function DeptHeadTasksInner() {
+  const { can } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [users, setUsers] = useState([]);
@@ -628,13 +631,15 @@ export default function DeptHeadTasks() {
             Tasks
           </h1>
         </div>
-        <button
-          onClick={() => setModal({ type: "add" })}
-          className="flex items-center gap-2 px-4 py-2.5 text-[11px] tracking-[0.15em] uppercase font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          Assign Task
-        </button>
+        {can("tasks", "create") && (
+          <button
+            onClick={() => setModal({ type: "add" })}
+            className="flex items-center gap-2 px-4 py-2.5 text-[11px] tracking-[0.15em] uppercase font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Assign Task
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -759,18 +764,22 @@ export default function DeptHeadTasks() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => setModal({ type: "edit", task: t })}
-                      className="p-1.5 text-foreground-muted hover:text-foreground transition-colors"
-                    >
-                      <Pencil className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={() => setModal({ type: "delete", task: t })}
-                      className="p-1.5 text-foreground-muted hover:text-[#ff4747] transition-colors"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+                    {can("tasks", "update") && (
+                      <button
+                        onClick={() => setModal({ type: "edit", task: t })}
+                        className="p-1.5 text-foreground-muted hover:text-foreground transition-colors"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                    )}
+                    {can("tasks", "delete") && (
+                      <button
+                        onClick={() => setModal({ type: "delete", task: t })}
+                        className="p-1.5 text-foreground-muted hover:text-[#ff4747] transition-colors"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -809,5 +818,13 @@ export default function DeptHeadTasks() {
         />
       )}
     </div>
+  );
+}
+
+export default function DeptHeadTasks() {
+  return (
+    <PermissionGuard resource="tasks" action="read">
+      <DeptHeadTasksInner />
+    </PermissionGuard>
   );
 }
