@@ -64,7 +64,7 @@ function MembersSkeleton() {
 // ─── Main Page ────────────────────────────────────────────────
 export default function DeptHeadMembers() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const [modal, setModal] = useState(null);
   // null | {type: "add"} | {type: "edit", user} | {type: "delete", user}
   const [departments, setDepartments] = useState([]);
@@ -207,6 +207,7 @@ export default function DeptHeadMembers() {
               {filtered.length}
             </p>
           </div>
+          {can("users", "create") && (
           <button
             onClick={() => setModal({ type: "add" })}
             className="flex items-center gap-2 px-4 py-2.5 bg-primary text-on-primary text-[11px] tracking-[0.15em] uppercase font-bold hover:bg-primary/90 transition-colors"
@@ -214,6 +215,7 @@ export default function DeptHeadMembers() {
             <UserPlus className="w-3.5 h-3.5" />
             Add Employee
           </button>
+          )}
         </div>
       </div>
 
@@ -273,6 +275,7 @@ export default function DeptHeadMembers() {
                 </div>
                 <div className="flex flex-col items-end gap-2 shrink-0">
                   <div className="flex items-center gap-1">
+                    {can("users", "update") && (
                     <button
                       onClick={() => setModal({ type: "edit", user: m })}
                       className="p-1.5 text-foreground-muted hover:text-foreground transition-colors"
@@ -280,6 +283,8 @@ export default function DeptHeadMembers() {
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
+                    )}
+                    {can("users", "delete") && (
                     <button
                       onClick={() => setModal({ type: "delete", user: m })}
                       className="p-1.5 text-foreground-muted hover:text-[#ff4747] transition-colors"
@@ -287,6 +292,7 @@ export default function DeptHeadMembers() {
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
+                    )}
                   </div>
                   <RoleBadge role={m.globalRole} />
                   <span
@@ -361,6 +367,7 @@ export default function DeptHeadMembers() {
                   </span>
                   {/* Actions */}
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {can("users", "update") && (
                     <button
                       onClick={() => setModal({ type: "edit", user: m })}
                       className="p-1.5 text-foreground-muted hover:text-foreground hover:bg-[#1a1a1a] transition-colors"
@@ -368,6 +375,8 @@ export default function DeptHeadMembers() {
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
+                    )}
+                    {can("users", "delete") && (
                     <button
                       onClick={() => setModal({ type: "delete", user: m })}
                       className="p-1.5 text-foreground-muted hover:text-[#ff4747] hover:bg-red-500/5 transition-colors"
@@ -375,6 +384,7 @@ export default function DeptHeadMembers() {
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
+                    )}
                   </div>
                 </div>
               ))}

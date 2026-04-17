@@ -398,24 +398,7 @@ function LogFormModal({ userId, projects, onClose, onSave, existing }) {
                 </div>
 
                 {/* Log Type & Time Range */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-[10px] tracking-[0.12em] uppercase text-foreground-muted mb-1">
-                      Type
-                    </label>
-                    <select
-                      value={item.logType}
-                      onChange={(e) =>
-                        updateWorkItem(index, "logType", e.target.value)
-                      }
-                      className="w-full bg-surface-low border border-outline px-3 py-2 text-[12px] text-foreground focus:outline-none focus:border-primary"
-                    >
-                      <option value="task_work">Task Work</option>
-                      <option value="meeting">Meeting</option>
-                      <option value="ad_hoc">Ad-hoc</option>
-                      <option value="review">Review</option>
-                    </select>
-                  </div>
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] tracking-[0.12em] uppercase text-foreground-muted mb-1">
                       Start Time

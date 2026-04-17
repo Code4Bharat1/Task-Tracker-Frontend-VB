@@ -40,20 +40,35 @@ export function AuthProvider({ children }) {
     }
     try {
       const { data } = await api.get("/companies/permissions/roles");
+
+      // department_head uses "department_head" key, lead uses "lead" key
       let roleKey;
       if (role === "department_head") roleKey = "department_head";
       else if (role === "lead") roleKey = "lead";
       else roleKey = "employee";
 
       const rolePerms = data?.rolePermissions?.[roleKey];
-      if (rolePerms) {
-        // Merge with defaults so any missing resource falls back to true
+
+      if (rolePerms && Object.keys(rolePerms).length > 0) {
+        // Build permissions from DB — do NOT fall back to true for missing actions.
+        // If a resource exists in DB, use exactly what the DB says.
+        // If a resource is missing from DB entirely, fall back to DEFAULT_PERMS for that resource.
         const merged = { ...DEFAULT_PERMS };
-        for (const resource of Object.keys(rolePerms)) {
-          merged[resource] = { ...DEFAULT_PERMS[resource], ...rolePerms[resource] };
+        for (const resource of Object.keys(DEFAULT_PERMS)) {
+          if (rolePerms[resource] !== undefined) {
+            // Resource is configured in DB — use DB values exactly, default missing actions to false
+            merged[resource] = {
+              create: rolePerms[resource].create ?? false,
+              read:   rolePerms[resource].read   ?? false,
+              update: rolePerms[resource].update ?? false,
+              delete: rolePerms[resource].delete ?? false,
+            };
+          }
+          // else: resource not in DB at all — keep DEFAULT_PERMS value
         }
         setPermissions(merged);
       } else {
+        // No permissions saved yet — use defaults (all true)
         setPermissions(DEFAULT_PERMS);
       }
     } catch {

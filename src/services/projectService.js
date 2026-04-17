@@ -120,8 +120,19 @@ export async function updateTestingPhase(id, phaseIndex, status) {
 export async function uploadProjectSrs(id, file) {
   const form = new FormData();
   form.append("file", file);
-  const { data } = await api.post(`/projects/${id}/srs`, form);
-  return data?.project ?? data;
+  try {
+    const { data } = await api.post(`/projects/${id}/srs`, form);
+    return data?.project ?? data;
+  } catch (error) {
+    if (error.response?.status === 401) {
+      console.error("Authentication failed. Please check:", {
+        hasToken: !!document.cookie.match(/access_token=/),
+        hasSession: !!localStorage.getItem('hasSession'),
+        error: error.response?.data
+      });
+    }
+    throw error;
+  }
 }
 
 /**

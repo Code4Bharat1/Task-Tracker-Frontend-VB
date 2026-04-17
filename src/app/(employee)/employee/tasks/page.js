@@ -40,16 +40,6 @@ import {
 import { getMyProjects } from "@/services/projectService";
 import { getUsers } from "@/services/userService";
 
-function formatDateTime(d) {
-  if (!d) return "—";
-  return new Date(d).toLocaleTimeString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function formatDate(d) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-US", {
@@ -638,7 +628,7 @@ function LeadTasksPageInner() {
       <div className="overflow-x-auto">
         <div className="border border-outline bg-surface-low overflow-hidden min-w-[580px]">
           <div className="grid grid-cols-[2fr_1fr_1fr_120px_60px] gap-4 px-6 py-3 border-b border-outline bg-surface-container">
-            {["Task", "Project", "Priority", "Time", ""].map((h) => (
+            {["Task", "Project", "Priority", "Start – End Date", ""].map((h) => (
               <span key={h} className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted font-bold">{h}</span>
             ))}
           </div>
@@ -687,21 +677,13 @@ function LeadTasksPageInner() {
                   <div><PriorityBadge priority={t.priority} /></div>
 
                   <div className="flex flex-col gap-0.5">
-                    {t.developerStartedAt && (
-                      <div className="flex flex-col">
-                        <span className="text-[7px] uppercase text-foreground-muted font-bold tracking-wider">Start</span>
-                        <span className="text-[9px] text-foreground">{formatDateTime(t.developerStartedAt)}</span>
-                      </div>
-                    )}
-                    {t.developerFinishedAt && (
-                      <div className="flex flex-col">
-                        <span className="text-[7px] uppercase text-foreground-muted font-bold tracking-wider">Finish</span>
-                        <span className="text-[9px] text-foreground">{formatDateTime(t.developerFinishedAt)}</span>
-                      </div>
-                    )}
-                    {!t.developerStartedAt && !t.developerFinishedAt && (
-                      <span className="text-[9px] text-foreground-muted">—</span>
-                    )}
+                    <div className="flex items-center gap-1.5 text-foreground-muted">
+                      <Calendar className="w-3 h-3" />
+                      <span className="text-[11px]">{formatDate(t.startTime)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-foreground-muted pl-4">
+                      <span className="text-[11px]">→ {formatDate(t.endTime)}</span>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

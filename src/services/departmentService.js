@@ -56,10 +56,16 @@ export async function createDepartment(payload) {
   const body = {
     departmentName: payload.departmentName.toLowerCase().trim(),
   };
+
   if (payload.newHeadName && payload.newHeadEmail) {
+    // Create department + new head user
     body.name = payload.newHeadName.trim();
     body.email = payload.newHeadEmail.trim().toLowerCase();
+  } else if (payload.headId) {
+    // Create department + assign existing user as head
+    body.headId = payload.headId;
   }
+  // else: create department only — no head
 
   const { data } = await api.post("/departments", body);
   return {

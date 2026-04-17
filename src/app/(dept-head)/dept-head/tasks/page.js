@@ -39,16 +39,6 @@ import { getProjects } from "@/services/projectService";
 import { getUsers } from "@/services/userService";
 // DatePicker removed — using native datetime-local inputs
 
-function formatDateTime(d) {
-  if (!d) return "—";
-  return new Date(d).toLocaleTimeString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function formatDate(d) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-US", {
@@ -112,6 +102,9 @@ function TaskModal({
           projectId: initial.projectId?._id || initial.projectId || "",
           priority: initial.priority || "MEDIUM",
           status: initial.status || "TODO",
+          contributors: (initial.contributors || []).map(
+            (c) => c.userId?._id || c.userId || c,
+          ),
           reviewers: (initial.reviewers || []).map(
             (r) => r.userId?._id || r.userId || r,
           ),
@@ -126,6 +119,7 @@ function TaskModal({
           projectId: "",
           priority: "MEDIUM",
           status: "TODO",
+          contributors: [],
           reviewers: [],
           startTime: "",
           endTime: "",
@@ -345,7 +339,7 @@ function TaskModal({
           </div>
 
           <div className="space-y-4">
-            <Field label="Assign Reviewers">
+            <Field label="Assign Contributors">
               <div className="space-y-2">
                 <div className="flex gap-2">
                   <div className="relative flex-1">
@@ -417,7 +411,7 @@ function TaskModal({
                   ) : (
                     filteredUsers.map((u) => {
                       const id = u._id;
-                      const isRev = (form.reviewers || []).includes(id);
+                      const isRev = (form.contributors || []).includes(id);
                       return (
                         <div
                           key={id}
@@ -435,7 +429,7 @@ function TaskModal({
                             <input
                               type="checkbox"
                               checked={isRev}
-                              onChange={() => toggleUser(id, "reviewers")}
+                              onChange={() => toggleUser(id, "contributors")}
                               className="w-4 h-4 rounded border border-outline text-primary focus:outline-none"
                             />
                           </div>
@@ -578,7 +572,7 @@ function DeptHeadTasksInner() {
       if (attachFile && created?._id) {
         try { await uploadTaskAttachment(created._id, attachFile); } catch { /* non-blocking */ }
       }
-      setTasks((prev) => [created, ...prev]);
+      await loadData(); // reload to get populated projectId
       setModal(null);
     } catch (err) {
       setError("Failed to assign task.");
@@ -702,7 +696,7 @@ function DeptHeadTasksInner() {
       <div className="overflow-x-auto">
         <div className="border border-outline bg-surface-low overflow-hidden min-w-145">
           <div className="grid grid-cols-[2fr_1fr_1fr_120px_60px] gap-4 px-6 py-3 border-b border-outline bg-surface-container">
-            {["Task", "Project", "Priority", "Deadline", ""].map((h) => (
+            {["Task", "Project", "Priority", "Start – End Date", ""].map((h) => (
               <span
                 key={h}
                 className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted font-bold"
@@ -748,19 +742,11 @@ function DeptHeadTasksInner() {
                     <div className="flex items-center gap-1.5 text-foreground-muted">
                       <Calendar className="w-3 h-3" />
                       <span className="text-[12px]">
-                        {formatDate(t.deadline)}
+                        {formatDate(t.startTime || t.start_time)}
                       </span>
                     </div>
-                    {/* Timing Highlights */}
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2 pt-2 border-t border-outline/20">
-                      <div className="flex flex-col">
-                        <span className="text-[7px] uppercase text-foreground-muted font-bold tracking-wider">Dev Start</span>
-                        <span className="text-[9px] text-foreground">{formatDateTime(t.developerStartedAt)}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[7px] uppercase text-foreground-muted font-bold tracking-wider">Dev Finish</span>
-                        <span className="text-[9px] text-foreground">{formatDateTime(t.developerFinishedAt)}</span>
-                      </div>
+                    <div className="flex items-center gap-1.5 text-foreground-muted pl-4">
+                      <span className="text-[11px]">→ {formatDate(t.endTime || t.end_time)}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

@@ -59,8 +59,9 @@ export async function getUsers({ filterRole, limit, page, search } = {}) {
     return data.data ?? data.users ?? [];
   } catch (err) {
     if (err?.response?.status === 403) {
+      // Role doesn't have access to full user list — fall back to colleagues
       const { data } = await api.get("/users/colleagues");
-      return data.data ?? [];
+      return data.data ?? data.users ?? [];
     }
     throw err;
   }

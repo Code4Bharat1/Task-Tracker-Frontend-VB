@@ -43,15 +43,18 @@ function StatusBadge({ status }) {
   );
 }
 
-function myRole(project, userId) {
-  if (project.managerIds?.includes(userId)) return "Project Manager";
-  if (project.testerIds?.includes(userId)) return "Tester";
-  if (project.developerIds?.includes(userId)) return "Developer";
+function myRole(project, userId, userRole) {
+  if (userRole === "lead") return "Lead";
+  const uid = String(userId);
+  if ((project.managerIds || []).map(String).includes(uid)) return "Project Manager";
+  if ((project.testerIds || []).map(String).includes(uid)) return "Tester";
+  if ((project.developerIds || []).map(String).includes(uid)) return "Developer";
   return "Member";
 }
 
 function RoleBadge({ role }) {
   const map = {
+    "Lead": "text-[#c847ff] border-[#c847ff]/30 bg-[#c847ff]/10",
     "Project Manager": "text-[#e8a847] border-[#e8a847]/30 bg-[#e8a847]/10",
     Tester: "text-[#c847ff] border-[#c847ff]/30 bg-[#c847ff]/10",
     Developer: "text-primary   border-primary/30   bg-primary/10",
@@ -80,7 +83,7 @@ function EmployeeProjectsPageInner() {
     if (
       !loading &&
       (!user ||
-        !["employee", "project_manager", "developer", "tester"].includes(
+        !["employee", "project_manager", "developer", "tester", "lead"].includes(
           user?.role,
         ))
     )
@@ -207,7 +210,7 @@ function EmployeeProjectsPageInner() {
             ) : (
               <div className="divide-y divide-outline">
                 {filtered.map((p) => {
-                  const role = myRole(p, user._id);
+                  const role = myRole(p, user._id, user?.role || user?.globalRole);
                   const deadline = p.deadline
                     ? new Date(p.deadline).toLocaleDateString("en-US", {
                         month: "short",

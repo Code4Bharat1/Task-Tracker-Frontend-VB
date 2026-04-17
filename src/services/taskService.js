@@ -24,9 +24,7 @@ import api from "@/lib/api";
 
 export const TASK_STATUSES = [
   "TODO",
-  "IN_PROGRESS",
   "DONE",
-  "REJECTED",
 ];
 
 export const TASK_PRIORITY_META = {
@@ -52,7 +50,7 @@ export const TASK_PRIORITY_META = {
 
 export const TASK_STATUS_META = {
   TODO: {
-    label: "To Do",
+    label: "Pending",
     color: "text-foreground-muted",
     bg: "bg-foreground/10",
     border: "border-foreground/15",
@@ -66,7 +64,7 @@ export const TASK_STATUS_META = {
     next: "DONE",
   },
   DONE: {
-    label: "Done",
+    label: "Completed",
     color: "text-[#10b981]",
     bg: "bg-[#10b981]/10",
     border: "border-[#10b981]/30",

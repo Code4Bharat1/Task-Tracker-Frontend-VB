@@ -15,7 +15,7 @@ import {
 import { useAuth } from "@/lib/auth/context";
 import AuthLoader from "@/components/AuthLoader";
 import { DashboardSkeleton } from "@/components/skeletons";
-import { getProjects } from "@/services/projectService";
+import { getProjects, updateProject } from "@/services/projectService";
 import { getAllLogs } from "@/services/dailyLogService";
 import { getAllBugs } from "@/services/bugService";
 import { getTasks } from "@/services/taskService";
@@ -99,7 +99,7 @@ function StatCard({ label, value, sub, icon: Icon, accent }) {
 
 export default function DeptHeadDashboard() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, can } = useAuth();
   const [projects, setProjects] = useState([]);
   const [logs, setLogs] = useState([]);
   const [bugs, setBugs] = useState([]);
@@ -117,11 +117,11 @@ export default function DeptHeadDashboard() {
   const loadData = useCallback(async () => {
     try {
       const [pR, lR, bR, tR, lbR] = await Promise.allSettled([
-        getProjects(),
-        getAllLogs(),
-        getAllBugs(),
-        getTasks(),
-        getLeaderboard("all"),
+        can("projects",  "read") ? getProjects()      : Promise.resolve([]),
+        can("dailyLogs", "read") ? getAllLogs()        : Promise.resolve([]),
+        can("bugs",      "read") ? getAllBugs()        : Promise.resolve([]),
+        can("tasks",     "read") ? getTasks()          : Promise.resolve([]),
+        can("leaderboard","read") ? getLeaderboard("all") : Promise.resolve({}),
       ]);
       setProjects(pR.status === "fulfilled" ? pR.value : []);
       setLogs(lR.status === "fulfilled" ? lR.value : []);
@@ -134,7 +134,7 @@ export default function DeptHeadDashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [can]);
 
   useEffect(() => {
     if (!authLoading && user) loadData();
@@ -201,40 +201,51 @@ export default function DeptHeadDashboard() {
       </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-            <StatCard
-              label="Projects"
-              value={projects.length}
-              icon={FolderKanban}
-              accent="text-[#47c8ff]"
-            />
-            <StatCard
-              label="Tasks"
-              value={openTasks.length}
-              icon={CheckCircle2}
-              accent="text-[#47ff8a]"
-            />
-            <StatCard
-              label="Logs This Week"
-              value={logsThisWeek.length}
-              icon={Clock}
-              accent="text-[#e8a847]"
-            />
-            <StatCard
-              label="Issues"
-              value={openBugs.length}
-              icon={AlertCircle}
-              accent="text-[#ff4747]"
-            />
-            <StatCard
-              label="Top Performer"
-              value={topPerformer ? topPerformer.name : "—"}
-              sub={topPerformer ? `${topPerformer.score ?? 0} pts` : "No data"}
-              icon={Users}
-              accent="text-[#e8a847]"
-            />
+            {can("projects", "read") && (
+              <StatCard
+                label="Projects"
+                value={projects.length}
+                icon={FolderKanban}
+                accent="text-[#47c8ff]"
+              />
+            )}
+            {can("tasks", "read") && (
+              <StatCard
+                label="Tasks"
+                value={openTasks.length}
+                icon={CheckCircle2}
+                accent="text-[#47ff8a]"
+              />
+            )}
+            {can("dailyLogs", "read") && (
+              <StatCard
+                label="Logs This Week"
+                value={logsThisWeek.length}
+                icon={Clock}
+                accent="text-[#e8a847]"
+              />
+            )}
+            {can("bugs", "read") && (
+              <StatCard
+                label="Issues"
+                value={openBugs.length}
+                icon={AlertCircle}
+                accent="text-[#ff4747]"
+              />
+            )}
+            {can("leaderboard", "read") && (
+              <StatCard
+                label="Top Performer"
+                value={topPerformer ? topPerformer.name : "—"}
+                sub={topPerformer ? `${topPerformer.score ?? 0} pts` : "No data"}
+                icon={Users}
+                accent="text-[#e8a847]"
+              />
+            )}
           </div>
 
       {/* Recent Projects */}
+      {can("projects", "read") && (
       <div className="border border-outline bg-surface-low">
         <div className="flex items-center justify-between px-6 py-4 border-b border-outline">
           <span className="text-[11px] tracking-[0.2em] uppercase font-bold text-foreground">
@@ -270,15 +281,16 @@ export default function DeptHeadDashboard() {
                 <div className="relative" onClick={(e) => e.stopPropagation()}>
                   <select
                     value={projectStatuses[p._id] || p.status}
-                    onChange={(e) =>
-                      setProjectStatuses((prev) => ({
-                        ...prev,
-                        [p._id]: e.target.value,
-                      }))
-                    }
+                    onChange={async (e) => {
+                      const newStatus = e.target.value;
+                      setProjectStatuses((prev) => ({ ...prev, [p._id]: newStatus }));
+                      try {
+                        await updateProject(p._id, { status: newStatus });
+                      } catch { /* non-blocking */ }
+                    }}
                     className="appearance-none bg-surface-container border border-outline pl-3 pr-8 py-1.5 text-[10px] tracking-[0.1em] uppercase font-bold text-foreground focus:outline-none focus:border-primary transition-colors cursor-pointer"
                   >
-                    {Object.keys(STATUS_META).map((s) => (
+                    {Object.keys(STATUS_META).filter(s => ["IN_PROGRESS","COMPLETED"].includes(s)).map((s) => (
                       <option key={s} value={s}>
                         {STATUS_META[s].label}
                       </option>
@@ -315,9 +327,11 @@ export default function DeptHeadDashboard() {
           )}
         </div>
       </div>
+      )}
 
       {/* Open Issues + Top Performers + Today's Logs */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {can("bugs", "read") && (
         <div className="border border-outline bg-surface-low">
           <div className="flex items-center justify-between px-6 py-4 border-b border-outline">
             <span className="text-[11px] tracking-[0.2em] uppercase font-bold text-foreground">
@@ -355,7 +369,9 @@ export default function DeptHeadDashboard() {
             )}
           </div>
         </div>
+        )}
 
+        {can("leaderboard", "read") && (
         <div className="border border-outline bg-surface-low">
           <div className="flex items-center justify-between px-6 py-4 border-b border-outline">
             <span className="text-[11px] tracking-[0.2em] uppercase font-bold text-foreground">
@@ -389,7 +405,9 @@ export default function DeptHeadDashboard() {
             )}
           </div>
         </div>
+        )}
 
+        {can("dailyLogs", "read") && (
         <div className="border border-outline bg-surface-low">
           <div className="flex items-center justify-between px-6 py-4 border-b border-outline">
             <span className="text-[11px] tracking-[0.2em] uppercase font-bold text-foreground">
@@ -430,6 +448,7 @@ export default function DeptHeadDashboard() {
             )}
           </div>
         </div>
+        )}
       </div>
     </div>
   );

@@ -59,6 +59,28 @@ const NAV_CONFIG = {
       { label: "Leaderboard", icon: Trophy, href: "/employee/leaderboard" },
     ],
   },
+  lead: {
+    icon: Briefcase,
+    label: "Lead Portal",
+    breadcrumb: "Lead",
+    items: [
+      {
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        href: "/employee/dashboard",
+      },
+      { label: "Projects", icon: FolderKanban, href: "/employee/projects" },
+      { label: "Tasks", icon: CheckSquare, href: "/employee/tasks" },
+      { label: "Reports", icon: FileText, href: "/employee/reports" },
+      {
+        label: "Daily Logs",
+        icon: ClipboardList,
+        href: "/employee/daily-logs",
+      },
+      { label: "Issues", icon: Bug, href: "/employee/bugs" },
+      { label: "Leaderboard", icon: Trophy, href: "/employee/leaderboard" },
+    ],
+  },
   project_manager: {
     icon: Briefcase,
     label: "Project Manager",
@@ -140,7 +162,7 @@ const NAV_CONFIG = {
   },
 };
 
-const ALLOWED_ROLES = ["employee", "project_manager", "developer", "tester"];
+const ALLOWED_ROLES = ["employee", "project_manager", "developer", "tester", "lead"];
 
 export default function EmployeeLayout({ children }) {
   const router = useRouter();
@@ -167,8 +189,6 @@ export default function EmployeeLayout({ children }) {
   let roleKey = "employee";
   if (NAV_CONFIG[rawRole]) {
     roleKey = rawRole;
-  } else if (rawRole === "lead" || rawRole.includes("lead")) {
-    roleKey = "project_manager";
   } else if (rawRole === "project_manager") {
     roleKey = "project_manager";
   }
@@ -179,13 +199,12 @@ export default function EmployeeLayout({ children }) {
     .toString()
     .toLowerCase();
   const canSeeReports =
+    userRoleNormalized === "lead" ||
     userRoleNormalized === "project_manager" ||
-    userRoleNormalized === "project manager" ||
-    userRoleNormalized.includes("lead");
+    userRoleNormalized === "project manager";
 
   // Start with the configured items. We'll inject Reports if role or manager status allows it.
   const navItemsBase = [...(config.items || [])];
-  const [navItemsInjected] = useState(() => navItemsBase);
 
   useEffect(() => {
     let mounted = true;
@@ -204,10 +223,6 @@ export default function EmployeeLayout({ children }) {
                 p.managerIds.map(String).includes(String(user._id)))
             );
           });
-        if (typeof window !== "undefined") {
-          // eslint-disable-next-line no-console
-          console.log("[Sidebar] my-projects:", projs, "manages:", manages);
-        }
         setIsManager(!!manages);
       } catch (e) {
         // ignore
@@ -220,7 +235,7 @@ export default function EmployeeLayout({ children }) {
   if (loading || !user) return <AuthLoader />;
 
   const canSeeReportsFinal = canSeeReports || isManager;
-  const navItems = [...navItemsInjected].filter((item) => {
+  const navItems = [...navItemsBase].filter((item) => {
     const resource = NAV_PERMISSION_MAP[item.href];
     if (!resource) return true; // dashboard and others always visible
     return can(resource, "read");

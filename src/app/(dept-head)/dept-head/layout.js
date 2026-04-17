@@ -27,6 +27,8 @@ const NAV_PERMISSION_MAP = {
   "/dept-head/tasks":      "tasks",
   "/dept-head/bugs":       "bugs",
   "/dept-head/daily-logs": "dailyLogs",
+  "/dept-head/members":    "users",
+  "/dept-head/scoreboard": "leaderboard",
 };
 
 const NAV_ITEMS = [

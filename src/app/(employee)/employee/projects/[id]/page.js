@@ -886,7 +886,7 @@ export default function EmployeeProjectDetailPage() {
     if (
       !loading &&
       (!user ||
-        !["employee", "project_manager", "developer", "tester"].includes(
+        !["employee", "project_manager", "developer", "tester", "lead"].includes(
           user?.role,
         ))
     )
@@ -922,7 +922,7 @@ export default function EmployeeProjectDetailPage() {
 
   if (loading || !user) return <AuthLoader />;
 
-  const isPM = user?.role === "project_manager";
+  const isPM = user?.role === "project_manager" || user?.role === "lead";
   const isDev = user?.role === "developer";
   const isTester = user?.role === "tester";
 
@@ -1040,6 +1040,7 @@ export default function EmployeeProjectDetailPage() {
     project.testingPhases.every((p) => p.status === "PASSED");
 
   const ROLE_BADGE = {
+    lead: "text-[#c847ff] border-[#c847ff]/30 bg-[#c847ff]/10",
     project_manager: "text-[#e8a847] border-[#e8a847]/30 bg-[#e8a847]/10",
     tester: "text-[#c847ff] border-[#c847ff]/30 bg-[#c847ff]/10",
     developer: "text-primary border-primary/30 bg-primary/10",
