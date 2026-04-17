@@ -453,7 +453,9 @@ export default function LeadTasksPage() {
   const [modal, setModal] = useState(null);
   const [advancing, setAdvancing] = useState(null);
 
-  const isLead = true; // all users on this page can assign tasks
+  const isLead = ["lead", "department_head", "admin", "project_manager"].includes(
+    user?.role || user?.globalRole || ""
+  );
 
   const loadData = useCallback(async () => {
     if (!user) return;
