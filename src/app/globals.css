@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /* -----------------------------
@@ -5,9 +6,6 @@
 ----------------------------- */
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-sans: var(--font-geist-mono);
-
   /* surfaces */
   --color-surface: var(--surface);
   --color-surface-low: var(--surface-low);
@@ -89,10 +87,13 @@
    GLOBAL STYLES
 ----------------------------- */
 
+* {
+  font-family: 'Inter', sans-serif !important;
+}
+
 body {
   background: var(--surface);
   color: var(--foreground);
-  font-family: var(--font-sans);
 }
 
 button {
