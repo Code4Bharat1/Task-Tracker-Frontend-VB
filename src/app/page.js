@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth/context";
 import { getRedirectPath } from "@/lib/auth/utils";
 import AuthLoader from "@/components/AuthLoader";
 import Navbar from "@/components/Navbar/Navbar";
+import DotGrid from "@/components/DotGrid";
 import HeroSection from "@/components/Landing/HeroSection";
 import FeaturesSection from "@/components/Landing/FeaturesSection";
 import DashboardPanelsSection from "@/components/Landing/DashboardPanelsSection";
@@ -23,7 +24,7 @@ export default function Home() {
 
   return (
     <div className="relative bg-surface">
-      <div className="fixed inset-0 bg-dot-pattern pointer-events-none" />
+      <DotGrid />
       <Navbar />
       <div className="relative pt-[65px]">
         {/* Hero — centered, full-width */}
