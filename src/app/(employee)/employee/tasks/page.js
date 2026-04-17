@@ -635,7 +635,7 @@ export default function LeadTasksPage() {
       <div className="overflow-x-auto">
         <div className="border border-outline bg-surface-low overflow-hidden min-w-[580px]">
           <div className="grid grid-cols-[2fr_1fr_1fr_120px_60px] gap-4 px-6 py-3 border-b border-outline bg-surface-container">
-            {["Task", "Project", "Priority", "Deadline", ""].map((h) => (
+            {["Task", "Project", "Priority", "Time", ""].map((h) => (
               <span key={h} className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted font-bold">{h}</span>
             ))}
           </div>
@@ -677,26 +677,27 @@ export default function LeadTasksPage() {
                   </div>
 
                   <div className="text-[12px] text-foreground-muted truncate">
-                    {t.projectId?.name || "—"}
+                    {projects.find(p => p._id === (t.projectId?._id || t.projectId))?.name || "—"}
                   </div>
 
                   <div><PriorityBadge priority={t.priority} /></div>
 
                   <div className="flex flex-col gap-0.5">
-                    <div className="flex items-center gap-1.5 text-foreground-muted">
-                      <Calendar className="w-3 h-3" />
-                      <span className="text-[12px]">{formatDate(t.deadline)}</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2 pt-2 border-t border-outline/20">
+                    {t.developerStartedAt && (
                       <div className="flex flex-col">
-                        <span className="text-[7px] uppercase text-foreground-muted font-bold tracking-wider">Dev Start</span>
+                        <span className="text-[7px] uppercase text-foreground-muted font-bold tracking-wider">Start</span>
                         <span className="text-[9px] text-foreground">{formatDateTime(t.developerStartedAt)}</span>
                       </div>
+                    )}
+                    {t.developerFinishedAt && (
                       <div className="flex flex-col">
-                        <span className="text-[7px] uppercase text-foreground-muted font-bold tracking-wider">Dev Finish</span>
+                        <span className="text-[7px] uppercase text-foreground-muted font-bold tracking-wider">Finish</span>
                         <span className="text-[9px] text-foreground">{formatDateTime(t.developerFinishedAt)}</span>
                       </div>
-                    </div>
+                    )}
+                    {!t.developerStartedAt && !t.developerFinishedAt && (
+                      <span className="text-[9px] text-foreground-muted">—</span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
