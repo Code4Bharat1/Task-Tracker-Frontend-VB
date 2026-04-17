@@ -809,37 +809,6 @@ function TesterDashboard({ user, router }) {
             )}
           </div>
         </div>
-        <div className="border border-outline bg-surface-low lg:col-span-2">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-primary" />
-              <span className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
-                Testing Phases
-              </span>
-            </div>
-            <button
-              onClick={() => router.push("/employee/testing")}
-              className="flex items-center gap-1 text-[10px] tracking-widest uppercase text-foreground-muted hover:text-primary transition-colors"
-            >
-              Manage Tests <ArrowRight className="w-3 h-3" />
-            </button>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-outline">
-            {TESTING_PHASES.map((phase) => (
-              <div key={phase.key} className="px-5 py-4 text-center">
-                <p className="text-[10px] tracking-widest uppercase text-foreground-muted mb-1">
-                  {phase.label}
-                </p>
-                <p className="text-lg font-bold text-foreground">
-                  {phase.weight}%
-                </p>
-                <p className="text-[9px] tracking-widest uppercase text-foreground-muted mt-0.5">
-                  weight
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </>
   );

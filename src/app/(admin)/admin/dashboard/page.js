@@ -358,7 +358,7 @@ export default function AdminDashboard() {
                       {(d.departmentName || d.name || "").toUpperCase()}
                     </p>
                     <span className="text-[11px] text-foreground-muted">
-                      {d.employeeCount ?? 0} members
+                      {d.employeeCount ?? 0} Employee
                     </span>
                   </div>
                 ))

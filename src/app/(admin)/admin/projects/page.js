@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Users,
   ArrowLeft,
+  ArrowRight,
   LayoutList,
   LayoutGrid,
   Circle,
@@ -536,7 +537,7 @@ function MembersDrawer({ project, onClose }) {
             {/* Developers */}
             <div>
               <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted mb-2">
-                Developers ({project.members?.length || 0})
+                Employee ({project.members?.length || 0})
               </p>
               <div className="space-y-1.5">
                 {project.members?.length > 0 ? (
@@ -685,15 +686,18 @@ function ProjectCard({ project, onEdit, onDelete, onViewMembers }) {
   return (
     <button
       onClick={() => onViewMembers && onViewMembers(project)}
-      className="border border-outline bg-surface-low p-5 hover:border-outline transition-colors group flex flex-col gap-4 text-left cursor-pointer"
+      className="border border-outline/50 bg-surface-low/50 backdrop-blur-sm p-5 hover:border-primary/50 hover:bg-surface-low hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 group flex flex-col gap-4 text-left cursor-pointer rounded-lg"
     >
       {/* Top */}
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted mb-1">
-            {project.department}
-          </p>
-          <h3 className="text-[13px] font-bold text-foreground tracking-wide leading-snug">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 rounded-full bg-primary/60 group-hover:bg-primary transition-colors" />
+            <p className="text-[9px] tracking-[0.2em] uppercase text-foreground-muted font-semibold">
+              {project.department}
+            </p>
+          </div>
+          <h3 className="text-[14px] font-bold text-foreground tracking-wide leading-snug group-hover:text-primary transition-colors">
             {project.name}
           </h3>
         </div>
@@ -701,55 +705,59 @@ function ProjectCard({ project, onEdit, onDelete, onViewMembers }) {
       </div>
 
       {/* Progress */}
-      <div>
-        <div className="flex justify-between mb-1.5">
-          <span className="text-[10px] text-foreground-muted uppercase tracking-wider">
-            Modules
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-[9px] uppercase tracking-wider text-foreground-muted font-semibold">
+            Progress
           </span>
-          <span className="text-[10px] font-bold text-primary">{pct}%</span>
+          <span className="text-[11px] font-bold text-primary">{pct}%</span>
         </div>
-        <div className="w-full h-1 bg-surface-container">
+        <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
           <div
-            className="h-full bg-primary transition-all"
+            className="h-full bg-gradient-to-r from-primary/80 to-primary transition-all duration-500 ease-out rounded-full"
             style={{ width: `${pct}%` }}
           />
         </div>
-        <p className="text-[10px] text-foreground-muted mt-1">
-          {project.modulesCompleted}/{project.modules} done
+        <p className="text-[9px] text-foreground-muted/80">
+          {project.modulesCompleted} of {project.modules} modules completed
         </p>
       </div>
 
       {/* Meta */}
-      <div className="grid grid-cols-2 gap-2 text-[11px]">
-        <div>
-          <p className="text-foreground-muted mb-0.5 text-[10px] uppercase tracking-wider">
+      <div className="grid grid-cols-2 gap-3 pt-2">
+        <div className="bg-surface-container/50 rounded-lg p-2.5">
+          <p className="text-foreground-muted/70 mb-1 text-[8px] uppercase tracking-wider font-semibold">
             Manager
           </p>
-          <p className="text-foreground font-bold truncate">
+          <p className="text-foreground font-semibold truncate text-[11px]">
             {project.manager || "—"}
           </p>
         </div>
-        <div>
-          <p className="text-foreground-muted mb-0.5 text-[10px] uppercase tracking-wider">
+        <div className="bg-surface-container/50 rounded-lg p-2.5">
+          <p className="text-foreground-muted/70 mb-1 text-[8px] uppercase tracking-wider font-semibold">
             Deadline
           </p>
-          <p className="text-foreground font-bold">
+          <p className="text-foreground font-semibold text-[11px]">
             {formatDate(project.deadline)}
           </p>
         </div>
       </div>
 
       {/* Footer: show members count only; card click opens members drawer */}
-      <div className="flex items-center justify-between pt-2 border-t border-outline">
-        <div className="flex items-center gap-1.5 text-foreground-muted">
-          <Users className="w-3.5 h-3.5" />
-          <span className="text-[12px] font-bold text-[#47c8ff]">
+      <div className="flex items-center justify-between pt-3 border-t border-outline/50">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+            <Users className="w-3.5 h-3.5 text-primary" />
+          </div>
+          <span className="text-[12px] font-bold text-foreground">
             {project.members?.length || 0}
+            <span className="text-foreground-muted/60 font-normal ml-1">Employee</span>
           </span>
         </div>
-        <span className="text-[11px] text-foreground-muted opacity-60">
-          &nbsp;
-        </span>
+        <div className="flex items-center gap-1.5 text-foreground-muted/50 group-hover:text-primary/70 transition-colors">
+          <span className="text-[9px] uppercase tracking-wider font-semibold">View</span>
+          <ArrowRight className="w-3 h-3" />
+        </div>
       </div>
     </button>
   );
@@ -1115,7 +1123,7 @@ export default function ProjectsOverview() {
                 "Progress",
                 "Deadline",
                 "Status",
-                "Members",
+                "Employee",
               ].map((h) => (
                 <span
                   key={h}

@@ -26,7 +26,7 @@ import {
 // SRS §5.1 — Global roles only
 const GLOBAL_ROLES = [
   { value: "department_head", label: "Dept Head" },
-  { value: "lead", label: "Lead" },
+ 
   { value: "employee", label: "Employee" },
 ];
 

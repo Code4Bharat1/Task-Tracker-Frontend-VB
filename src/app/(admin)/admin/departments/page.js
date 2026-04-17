@@ -392,7 +392,7 @@ function DeleteModal({ dept, onClose, onConfirm, saving }) {
         </p>
         <p className="text-[11px] text-foreground-muted mb-5">
           This department has{" "}
-          <span className="text-[#ff4747]">{dept.employeeCount} members</span>.{" "}
+          <span className="text-[#ff4747]">{dept.employeeCount} Employee</span>.{" "}
           This action cannot be undone.
         </p>
         <div className="flex gap-2">
@@ -467,7 +467,7 @@ function MembersDrawer({ dept, onClose }) {
             {displayName(dept.departmentName)}
           </h2>
           <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted mt-0.5">
-            {dept.employeeCount} members
+            {dept.employeeCount} Employee
           </p>
         </div>
 
@@ -663,7 +663,7 @@ export default function DepartmentManagement() {
         {[
           { label: "Total Departments", value: departments.length },
           {
-            label: "Total Members",
+            label: "Total Employee",
             value: departments.reduce(
               (s, d) => s + (Number(d?.employeeCount) || 0),
               0,
@@ -775,7 +775,7 @@ export default function DepartmentManagement() {
       <div className="hidden md:block overflow-x-auto">
         <div className="border border-outline bg-surface-low overflow-hidden min-w-150">
           <div className="grid grid-cols-[2fr_2fr_1fr_1fr_100px] gap-4 px-6 py-3 border-b border-outline bg-surface-container">
-            {["Department", "Head", "Members", "Created", ""].map((h) => (
+            {["Department", "Head", "Employee", "Created", ""].map((h) => (
               <span
                 key={h}
                 className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted font-bold"

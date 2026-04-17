@@ -83,7 +83,7 @@ const ROLES = [
     color: "text-[#47c8ff]",
     bg: "bg-[#47c8ff]/10",
     border: "border-[#47c8ff]/30",
-    description: "Manages a department, its members and projects",
+    description: "Manages a department, its Employee and projects",
     defaults: {
       users:        { create: true,  read: true,  update: true,  delete: false },
       projects:     { create: true,  read: true,  update: true,  delete: true  },
@@ -102,7 +102,7 @@ const ROLES = [
     color: "text-[#c847ff]",
     bg: "bg-[#c847ff]/10",
     border: "border-[#c847ff]/30",
-    description: "Project lead — assigns tasks, manages team members",
+    description: "Project lead — assigns tasks, manages team Employee",
     defaults: {
       users:        { create: false, read: true,  update: false, delete: false },
       projects:     { create: true,  read: true,  update: true,  delete: false },

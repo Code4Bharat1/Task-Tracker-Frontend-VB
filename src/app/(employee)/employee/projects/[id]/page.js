@@ -1412,101 +1412,20 @@ export default function EmployeeProjectDetailPage() {
             </button>
           </div>
         )}
-
-      {/* Testing Phases */}
-      {project?.status === "IN_PROGRESS" && (
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <CheckCircle2 className="w-4 h-4 text-[#e8a847]" />
-            <h2 className="text-[11px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
-              Testing Phases
-            </h2>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {(project.testingPhases?.length
-              ? project.testingPhases
-              : DEFAULT_TESTING_PHASES
-            ).map((phase, idx) => (
-              <div
-                key={phase.name}
-                className={`border p-4 space-y-3 ${phase.status === "PASSED" ? "border-[#47ff8a]/30 bg-[#47ff8a]/5" : phase.status === "FAILED" ? "border-[#ff4747]/30 bg-[#ff4747]/5" : "border-outline bg-surface-low"}`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-foreground">
-                    {phase.name}
-                  </span>
-                  <span className="text-[10px] font-bold text-foreground-muted">
-                    {phase.weight}%
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span
-                    className={`text-[10px] tracking-[0.1em] uppercase font-bold px-2 py-0.5 border ${phase.status === "PASSED" ? "text-[#47ff8a] border-[#47ff8a]/30 bg-[#47ff8a]/10" : phase.status === "FAILED" ? "text-[#ff4747] border-[#ff4747]/30 bg-[#ff4747]/10" : "text-foreground-muted border-outline bg-foreground/5"}`}
-                  >
-                    {phase.status}
-                  </span>
-                  {isTester && (
-                    <div className="flex gap-1.5">
-                      {phase.status !== "PASSED" && (
-                        <button
-                          onClick={() =>
-                            handleUpdateTestingPhase(idx, "PASSED")
-                          }
-                          disabled={phaseUpdating === idx}
-                          className="flex items-center gap-1 px-2 py-1 border border-[#47ff8a]/30 text-[#47ff8a] hover:bg-[#47ff8a]/10 text-[9px] tracking-[0.1em] uppercase font-bold transition-colors disabled:opacity-50"
-                        >
-                          {phaseUpdating === idx ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <CheckCircle2 className="w-3 h-3" />
-                          )}{" "}
-                          Pass
-                        </button>
-                      )}
-                      {phase.status !== "FAILED" && (
-                        <button
-                          onClick={() =>
-                            handleUpdateTestingPhase(idx, "FAILED")
-                          }
-                          disabled={phaseUpdating === idx}
-                          className="flex items-center gap-1 px-2 py-1 border border-[#ff4747]/30 text-[#ff4747] hover:bg-[#ff4747]/10 text-[9px] tracking-[0.1em] uppercase font-bold transition-colors disabled:opacity-50"
-                        >
-                          <X className="w-3 h-3" /> Fail
-                        </button>
-                      )}
-                      {phase.status !== "PENDING" && (
-                        <button
-                          onClick={() =>
-                            handleUpdateTestingPhase(idx, "PENDING")
-                          }
-                          disabled={phaseUpdating === idx}
-                          className="px-2 py-1 border border-outline text-foreground-muted hover:text-foreground text-[9px] tracking-[0.1em] uppercase font-bold transition-colors disabled:opacity-50"
-                        >
-                          Reset
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          {isPM && allPhasesPassed && (
-            <div className="mt-4">
-              <button
-                disabled={deploying}
-                onClick={handleDeployProject}
-                className="flex items-center gap-2 px-4 py-2.5 bg-[#47ff8a] text-black border border-[#47ff8a]/30 hover:bg-[#47ff8a]/90 text-[11px] tracking-[0.15em] uppercase font-bold transition-colors disabled:opacity-60"
-              >
-                {deploying ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Send className="w-3.5 h-3.5" />
-                )}
-                Deploy Project
-              </button>
-            </div>
-          )}
+      {isPM && allPhasesPassed && (
+        <div className="mt-4">
+          <button
+            disabled={deploying}
+            onClick={handleDeployProject}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#47ff8a] text-black border border-[#47ff8a]/30 hover:bg-[#47ff8a]/90 text-[11px] tracking-[0.15em] uppercase font-bold transition-colors disabled:opacity-60"
+          >
+            {deploying ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Send className="w-3.5 h-3.5" />
+            )}
+            Deploy Project
+          </button>
         </div>
       )}
 
