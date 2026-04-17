@@ -1,64 +1,71 @@
 "use client";
 import { useEffect, useRef } from "react";
 
-const DOT_SPACING = 24;
-const DOT_RADIUS = 1;
-const GLOW_RADIUS = 100; // px around cursor that glows
-const GLOW_COLOR_DARK = "255, 255, 255";
-const GLOW_COLOR_LIGHT = "15, 23, 42";
+const DOT_SPACING = 28;
+const DOT_RADIUS = 1.5;
+const CURSOR_RADIUS = 120;
 
 export default function DotGrid() {
   const canvasRef = useRef(null);
-  const mouseRef = useRef({ x: -9999, y: -9999 });
   const rafRef = useRef(null);
+  const mouseRef = useRef({ x: -9999, y: -9999 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     let cols, rows;
 
-    const isDark = () =>
-      document.documentElement.classList.contains("dark");
+    const isDark = () => document.documentElement.classList.contains("dark");
 
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = document.documentElement.scrollHeight;
+      canvas.width = document.documentElement.clientWidth;
+      canvas.height = window.innerHeight;
       cols = Math.ceil(canvas.width / DOT_SPACING) + 1;
       rows = Math.ceil(canvas.height / DOT_SPACING) + 1;
     };
 
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
       const { x: mx, y: my } = mouseRef.current;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       const dark = isDark();
-      const baseColor = dark ? GLOW_COLOR_DARK : GLOW_COLOR_LIGHT;
-      const baseAlpha = dark ? 0.18 : 0.12;
 
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const x = c * DOT_SPACING;
-          const y = r * DOT_SPACING;
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const x = col * DOT_SPACING;
+          const y = row * DOT_SPACING;
+
           const dist = Math.hypot(x - mx, y - my);
-          const glow = Math.max(0, 1 - dist / GLOW_RADIUS);
+          const cursorGlow =
+            dist < CURSOR_RADIUS ? Math.pow(1 - dist / CURSOR_RADIUS, 2) : 0;
 
-          // alpha: base + glow boost
-          const alpha = baseAlpha + glow * (dark ? 0.75 : 0.6);
-          // radius: slightly bigger when glowing
-          const radius = DOT_RADIUS + glow * 1.5;
+          const radius = DOT_RADIUS + cursorGlow * 2.5;
 
-          ctx.beginPath();
-          ctx.arc(x, y, radius, 0, Math.PI * 2);
+          let r, g, b, alpha;
+          if (dark) {
+            r = Math.round(160 + cursorGlow * 95);
+            g = Math.round(185 + cursorGlow * 50);
+            b = 255;
+            alpha = 0.15 + cursorGlow * 0.75;
+          } else {
+            r = Math.round(100 - cursorGlow * 60);
+            g = Math.round(116 - cursorGlow * 80);
+            b = Math.round(139 + cursorGlow * 116);
+            alpha = 0.12 + cursorGlow * 0.65;
+          }
 
-          if (glow > 0.01) {
-            // add a soft outer glow via shadow
-            ctx.shadowColor = `rgba(${baseColor}, ${glow * (dark ? 0.9 : 0.5)})`;
-            ctx.shadowBlur = 6 * glow;
+          if (cursorGlow > 0.1) {
+            ctx.shadowColor = dark
+              ? `rgba(120, 200, 255, ${cursorGlow * 0.9})`
+              : `rgba(99, 102, 241, ${cursorGlow * 0.7})`;
+            ctx.shadowBlur = 10 * cursorGlow;
           } else {
             ctx.shadowColor = "transparent";
             ctx.shadowBlur = 0;
           }
 
-          ctx.fillStyle = `rgba(${baseColor}, ${alpha})`;
+          ctx.beginPath();
+          ctx.arc(x, y, radius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
           ctx.fill();
         }
       }
@@ -67,7 +74,7 @@ export default function DotGrid() {
     };
 
     const onMouseMove = (e) => {
-      mouseRef.current = { x: e.clientX, y: e.clientY + window.scrollY };
+      mouseRef.current = { x: e.clientX, y: e.clientY };
     };
 
     const onMouseLeave = () => {
@@ -78,14 +85,6 @@ export default function DotGrid() {
     window.addEventListener("resize", resize);
     window.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseleave", onMouseLeave);
-
-    // observe theme changes
-    const observer = new MutationObserver(() => {});
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
     rafRef.current = requestAnimationFrame(draw);
 
     return () => {
@@ -93,7 +92,6 @@ export default function DotGrid() {
       window.removeEventListener("resize", resize);
       window.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseleave", onMouseLeave);
-      observer.disconnect();
     };
   }, []);
 
