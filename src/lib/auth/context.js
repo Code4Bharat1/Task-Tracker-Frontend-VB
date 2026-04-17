@@ -33,15 +33,13 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [permissions, setPermissions] = useState(DEFAULT_PERMS);
 
-  async function loadPermissions(role) {
-    // Admin always has full access — no need to fetch
+  const loadPermissions = useCallback(async (role) => {
     if (role === "admin" || role === "super_admin") {
       setPermissions(DEFAULT_PERMS);
       return;
     }
     try {
       const { data } = await api.get("/companies/permissions/roles");
-      // Map role to the correct key in rolePermissions
       let roleKey;
       if (role === "department_head") roleKey = "department_head";
       else if (role === "lead") roleKey = "lead";
@@ -49,14 +47,19 @@ export function AuthProvider({ children }) {
 
       const rolePerms = data?.rolePermissions?.[roleKey];
       if (rolePerms) {
-        setPermissions({ ...DEFAULT_PERMS, ...rolePerms });
+        // Merge with defaults so any missing resource falls back to true
+        const merged = { ...DEFAULT_PERMS };
+        for (const resource of Object.keys(rolePerms)) {
+          merged[resource] = { ...DEFAULT_PERMS[resource], ...rolePerms[resource] };
+        }
+        setPermissions(merged);
       } else {
         setPermissions(DEFAULT_PERMS);
       }
     } catch {
       setPermissions(DEFAULT_PERMS);
     }
-  }
+  }, []);
 
   useEffect(() => {
     const hadSession =

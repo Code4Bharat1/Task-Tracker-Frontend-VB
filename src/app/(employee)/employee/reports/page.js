@@ -5,6 +5,7 @@ import {
   ChevronDown, Search, Pencil, Trash2, Plus, X, Check,
   FileText, Loader2, AlertCircle,
 } from "lucide-react";
+import PermissionGuard from "@/components/PermissionGuard";
 import { getMyProjects } from "@/services/projectService";
 import {
   getMyReports, createReport, updateReport, deleteReport,
@@ -287,7 +288,7 @@ function normalize(r) {
   };
 }
 
-export default function ReportsPage() {
+function ReportsPageInner() {
   const [reports, setReports] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -591,5 +592,13 @@ export default function ReportsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function ReportsPage() {
+  return (
+    <PermissionGuard resource="reports" action="read">
+      <ReportsPageInner />
+    </PermissionGuard>
   );
 }

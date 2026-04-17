@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import PermissionGuard from "@/components/PermissionGuard";
 import {
   Bug,
   Plus,
@@ -326,7 +327,7 @@ function BugRow({ bug, projects, users, canUpdateStatus, onStatusChange }) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────
-export default function EmployeeBugsPage() {
+function EmployeeBugsPageInner() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [assignedBugs, setAssignedBugs] = useState([]);
@@ -572,5 +573,13 @@ export default function EmployeeBugsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function EmployeeBugsPage() {
+  return (
+    <PermissionGuard resource="bugs" action="read">
+      <EmployeeBugsPageInner />
+    </PermissionGuard>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import PermissionGuard from "@/components/PermissionGuard";
 import {
   ListTodo,
   Plus,
@@ -439,7 +440,7 @@ function DeleteModal({ task, onClose, onConfirm, saving }) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────
-export default function LeadTasksPage() {
+function LeadTasksPageInner() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [tasks, setTasks] = useState([]);
@@ -758,5 +759,13 @@ export default function LeadTasksPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function LeadTasksPage() {
+  return (
+    <PermissionGuard resource="tasks" action="read">
+      <LeadTasksPageInner />
+    </PermissionGuard>
   );
 }

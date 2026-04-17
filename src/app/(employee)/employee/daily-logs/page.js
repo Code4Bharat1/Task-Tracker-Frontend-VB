@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
+import PermissionGuard from "@/components/PermissionGuard";
 import {
   ClipboardList,
   Plus,
@@ -724,7 +725,7 @@ function GroupedLogList({ logs, projects, today, onEdit, onDelete }) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────
-export default function EmployeeDailyLogsPage() {
+function EmployeeDailyLogsPageInner() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [logs, setLogs] = useState([]);
@@ -997,5 +998,13 @@ export default function EmployeeDailyLogsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function EmployeeDailyLogsPage() {
+  return (
+    <PermissionGuard resource="dailyLogs" action="read">
+      <EmployeeDailyLogsPageInner />
+    </PermissionGuard>
   );
 }

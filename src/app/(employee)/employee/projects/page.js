@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import {
+import PermissionGuard from "@/components/PermissionGuard";import {
   FolderKanban,
   Search,
   ChevronRight,
@@ -67,7 +67,7 @@ function RoleBadge({ role }) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────
-export default function EmployeeProjectsPage() {
+function EmployeeProjectsPageInner() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [projects, setProjects] = useState([]);
@@ -249,5 +249,13 @@ export default function EmployeeProjectsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function EmployeeProjectsPage() {
+  return (
+    <PermissionGuard resource="projects" action="read">
+      <EmployeeProjectsPageInner />
+    </PermissionGuard>
   );
 }
