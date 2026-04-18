@@ -13,6 +13,7 @@ const plans = [
     cta: "Get Started Free",
     href: "/login",
     primary: false,
+    accent: "#6b7280",
     features: [
       "Up to 5 users",
       "10 active projects",
@@ -23,12 +24,13 @@ const plans = [
   },
   {
     name: "Pro",
-    price: "1200Rs",
+    price: "₹1200",
     period: "/ user / mo",
     description: "For growing teams that need more power and visibility.",
     cta: "Request Access",
     href: null,
     primary: true,
+    accent: "#2563eb",
     features: [
       "Unlimited users",
       "Unlimited projects",
@@ -46,6 +48,7 @@ const plans = [
     cta: "Contact Sales",
     href: "mailto:sales@tasktracker.io",
     primary: false,
+    accent: "#7c3aed",
     features: [
       "Everything in Pro",
       "SSO / SAML",
@@ -97,62 +100,68 @@ export default function PricingPage() {
       </div>
 
       {/* Plans */}
-      <main className="relative z-10 flex-1 px-6 pb-20 max-w-5xl mx-auto w-full">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <main className="relative z-10 flex-1 px-6 pb-20 max-w-6xl mx-auto w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`flex flex-col rounded-2xl border p-7 bg-surface-container transition-shadow ${
+              className={`group flex flex-col rounded-xl border p-8 transition-all duration-300 hover:-translate-y-2 cursor-pointer ${
                 plan.primary
-                  ? "border-primary ring-2 ring-primary/20 shadow-xl"
-                  : "border-outline"
+                  ? "border-[#2563eb] ring-1 ring-[#2563eb]/20 shadow-[0_8px_32px_rgba(37,99,235,0.15)] bg-white dark:bg-surface-container hover:shadow-[0_20px_60px_rgba(37,99,235,0.25)]"
+                  : "border-gray-200 dark:border-outline bg-white dark:bg-surface-container hover:shadow-[0_20px_60px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_20px_60px_rgba(0,0,0,0.4)]"
               }`}
             >
               {plan.primary && (
-                <span className="self-start mb-3 text-[10px] font-bold uppercase tracking-widest bg-primary text-on-primary px-2.5 py-1">
+                <span className="self-start mb-4 text-[10px] font-bold uppercase tracking-widest bg-[#2563eb] text-white px-3 py-1.5 rounded transition-transform duration-300 group-hover:scale-105">
                   Most Popular
                 </span>
               )}
-              <h2 className="text-lg font-bold text-foreground">{plan.name}</h2>
-              <p className="mt-1 text-sm text-foreground-muted">{plan.description}</p>
+              <h2 className="text-xl font-bold text-foreground tracking-tight transition-colors duration-300 group-hover:text-[#2563eb]">{plan.name}</h2>
+              <p className="mt-2 text-sm text-foreground-muted leading-relaxed">{plan.description}</p>
 
-              <div className="mt-5 flex items-end gap-1">
-                <span className="text-4xl font-extrabold text-foreground">{plan.price}</span>
+              <div className="mt-6 flex items-baseline gap-1">
+                <span className="text-4xl sm:text-5xl font-extrabold text-foreground tracking-tight transition-transform duration-300 group-hover:scale-105 origin-left">{plan.price}</span>
                 {plan.period && (
-                  <span className="mb-1 text-sm text-foreground-muted">{plan.period}</span>
+                  <span className="text-sm text-foreground-muted font-medium">{plan.period}</span>
                 )}
               </div>
 
-              <ul className="mt-6 flex flex-col gap-3 flex-1">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-foreground-muted">
-                    <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                    {f}
+              <ul className="mt-8 flex flex-col gap-3.5 flex-1">
+                {plan.features.map((f, idx) => (
+                  <li key={f} className="flex items-start gap-3 text-sm text-foreground-muted transition-transform duration-200" style={{ transitionDelay: `${idx * 30}ms` }}>
+                    <div
+                      className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0 transition-all duration-300 group-hover:scale-110"
+                      style={{ backgroundColor: `${plan.accent}15` }}
+                    >
+                      <Check className="w-3 h-3 transition-transform duration-300 group-hover:scale-110" style={{ color: plan.accent }} />
+                    </div>
+                    <span className="leading-relaxed transition-colors duration-300 group-hover:text-foreground">{f}</span>
                   </li>
                 ))}
               </ul>
 
-              <div className="mt-8">
+              <div className="mt-10">
                 {plan.href ? (
                   <Link
                     href={plan.href}
-                    className={`flex items-center justify-center gap-2 font-bold py-3 rounded transition-all text-sm ${
+                    onClick={(e) => e.stopPropagation()}
+                    className={`flex items-center justify-center gap-2 font-semibold py-3.5 px-6 rounded-lg transition-all duration-300 text-sm ${
                       plan.primary
-                        ? "bg-primary text-on-primary hover:opacity-90"
-                        : "border border-outline text-foreground hover:bg-surface-high"
+                        ? "bg-[#2563eb] text-white group-hover:bg-[#1d4ed8] shadow-md group-hover:shadow-lg group-hover:scale-[1.02]"
+                        : "border border-gray-300 dark:border-outline text-foreground group-hover:bg-[#2563eb] group-hover:text-white group-hover:border-[#2563eb] group-hover:scale-[1.02]"
                     }`}
                   >
                     {plan.cta}
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </Link>
                 ) : (
-                  <Link
-                    href="/"
-                    className="flex items-center justify-center gap-2 font-bold py-3 rounded transition-all text-sm bg-primary text-on-primary hover:opacity-90"
+                  <button
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full flex items-center justify-center gap-2 font-semibold py-3.5 px-6 rounded-lg transition-all duration-300 text-sm bg-[#2563eb] text-white group-hover:bg-[#1d4ed8] shadow-md group-hover:shadow-lg group-hover:scale-[1.02]"
                   >
                     {plan.cta}
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
+                    <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </button>
                 )}
               </div>
             </div>
