@@ -27,8 +27,6 @@ import {
 const GLOBAL_ROLES = [
   { value: "department_head", label: "Department Head" },
   { value: "lead",            label: "Employee — Lead" },
-  { value: "contributor",     label: "Employee — Contributor" },
-  { value: "reviewer",        label: "Employee — Reviewer" },
   { value: "employee",        label: "Employee" },
 ];
 

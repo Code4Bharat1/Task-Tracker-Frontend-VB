@@ -44,12 +44,8 @@ const MOCK_EMPLOYEES = [
 ];
 
 const DEPARTMENTS = [
-  "Engineering",
-  "Design",
+  "IT",
   "HR",
-  "DevOps",
-  "Marketing",
-  "Finance",
 ];
 
 const STATUSES = ["IN_PROGRESS", "COMPLETED"];
