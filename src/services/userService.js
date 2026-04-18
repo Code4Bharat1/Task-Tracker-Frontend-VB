@@ -47,6 +47,16 @@ export async function getDepartments() {
 }
 
 /**
+/**
+ * Get lightweight colleague list (any authenticated user)
+ * Real API → GET /users/colleagues
+ */
+export async function getColleagues() {
+  const { data } = await api.get("/users/colleagues");
+  return data.data ?? data.users ?? [];
+}
+
+/**
  * Fetch all users.
  * Admins/dept-heads → GET /users (full list)
  * Employees/PMs/etc → GET /users/colleagues (read-only, same company)

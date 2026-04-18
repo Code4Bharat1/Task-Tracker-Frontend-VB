@@ -23,6 +23,8 @@ import {
   Folder,
   SmilePlus,
   FileText,
+  MessageSquare,
+  Send,
 } from "lucide-react";
 import { ProjectsSkeleton } from "@/components/skeletons";
 import {
@@ -34,6 +36,7 @@ import {
   TASK_STATUS_META,
   TASK_PRIORITY_META,
   TASK_STATUSES,
+  addTaskNote,
 } from "@/services/taskService";
 import { getProjects } from "@/services/projectService";
 import { getUsers } from "@/services/userService";
@@ -529,6 +532,9 @@ function DeptHeadTasksInner() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [modal, setModal] = useState(null);
+  const [expandedNoteId, setExpandedNoteId] = useState(null);
+  const [noteText, setNoteText] = useState("");
+  const [savingNoteId, setSavingNoteId] = useState(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -610,6 +616,17 @@ function DeptHeadTasksInner() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleAddNote(taskId) {
+    if (!noteText.trim()) return;
+    try {
+      setSavingNoteId(taskId);
+      const updated = await addTaskNote(taskId, noteText.trim(), user.name);
+      setTasks((prev) => prev.map((t) => t._id === taskId ? updated : t));
+      setNoteText("");
+    } catch { setError("Failed to add note."); }
+    finally { setSavingNoteId(null); }
   }
 
   if (loading) return <ProjectsSkeleton />;
@@ -714,9 +731,12 @@ function DeptHeadTasksInner() {
             </div>
           ) : (
             <div className="divide-y divide-outline">
-              {filtered.map((t) => (
+              {filtered.map((t) => {
+                const isExpanded = expandedNoteId === t._id;
+                const isDone = t.status === "DONE";
+                return (
+                <div key={t._id}>
                 <div
-                  key={t._id}
                   className="grid grid-cols-[2fr_1fr_1fr_120px_60px] gap-4 px-6 py-4 items-center hover:bg-surface-container transition-colors group"
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -750,6 +770,16 @@ function DeptHeadTasksInner() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Notes button for completed tasks */}
+                    {isDone && (
+                      <button
+                        onClick={() => { setExpandedNoteId(isExpanded ? null : t._id); setNoteText(""); }}
+                        className={`p-1.5 transition-colors ${isExpanded ? "text-primary" : "text-foreground-muted hover:text-primary"}`}
+                        title="Notes"
+                      >
+                        <MessageSquare className="w-3 h-3" />
+                      </button>
+                    )}
                     {can("tasks", "update") && (
                       <button
                         onClick={() => setModal({ type: "edit", task: t })}
@@ -768,7 +798,40 @@ function DeptHeadTasksInner() {
                     )}
                   </div>
                 </div>
-              ))}
+                {/* Notes panel */}
+                {isExpanded && isDone && (
+                  <div className="px-6 pb-4 bg-surface-container border-t border-outline space-y-3">
+                    <p className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted pt-3">Notes & Comments</p>
+                    {(t.notes || []).length === 0 ? (
+                      <p className="text-[12px] text-foreground-muted italic">No notes yet.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {(t.notes || []).map((n, i) => (
+                          <div key={i} className="border border-outline bg-surface-low px-4 py-3">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[11px] font-bold text-foreground">{n.authorName || "Admin"}</span>
+                              <span className="text-[10px] text-foreground-muted">{n.createdAt ? new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}</span>
+                            </div>
+                            <p className="text-[12px] text-foreground-muted">{n.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <textarea value={noteText} onChange={(e) => setNoteText(e.target.value)} rows={2}
+                        placeholder="Add a note..." className="flex-1 bg-surface-low border border-outline px-3 py-2 text-[12px] text-foreground focus:outline-none focus:border-primary resize-none"
+                      />
+                      <button onClick={() => handleAddNote(t._id)} disabled={!noteText.trim() || savingNoteId === t._id}
+                        className="px-3 py-2 bg-primary text-on-primary text-[11px] uppercase font-bold hover:bg-primary/90 disabled:opacity-40 flex items-center gap-1 self-end"
+                      >
+                        {savingNoteId === t._id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />} Add
+                      </button>
+                    </div>
+                  </div>
+                )}
+                </div>
+                );
+              })}
             </div>
           )}
         </div>

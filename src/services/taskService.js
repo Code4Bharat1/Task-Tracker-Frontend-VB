@@ -178,3 +178,12 @@ export async function deleteTaskAttachment(id, publicId) {
   });
   return data.task ?? data;
 }
+
+/**
+ * Add a note to a completed task (admin/dept-head/lead only)
+ * POST /tasks/:id/notes
+ */
+export async function addTaskNote(id, text, authorName) {
+  const { data } = await api.post(`/tasks/${id}/notes`, { text, authorName });
+  return data.task ?? data;
+}

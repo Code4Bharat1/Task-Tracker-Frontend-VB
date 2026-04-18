@@ -38,7 +38,7 @@ import {
   TASK_STATUSES,
 } from "@/services/taskService";
 import { getMyProjects } from "@/services/projectService";
-import { getUsers } from "@/services/userService";
+import { getColleagues } from "@/services/userService";
 
 function formatDate(d) {
   if (!d) return "—";
@@ -454,7 +454,7 @@ function LeadTasksPageInner() {
       setDataLoading(true);
       const [projs, allUsers] = await Promise.all([
         getMyProjects(),
-        getUsers().catch(() => []),
+        getColleagues().catch(() => []),
       ]);
       const projArr = Array.isArray(projs) ? projs : [];
       setProjects(projArr);
@@ -544,10 +544,10 @@ function LeadTasksPageInner() {
   }
 
   async function handleAdvance(task) {
-    if (!["TODO", "IN_PROGRESS", "IN_REVIEW"].includes(task.status)) return;
+    if (task.status !== "TODO") return;
     try {
       setAdvancing(task._id);
-      const updated = await advanceTaskStatus(task._id);
+      const updated = await updateTask(task._id, { status: "DONE", completedAt: new Date().toISOString() });
       setTasks((prev) => prev.map((t) => (t._id === task._id ? updated : t)));
     } catch {
       setError("Failed to advance task.");
@@ -655,15 +655,15 @@ function LeadTasksPageInner() {
                         {/* Hide TO DO status badge for employees, show others */}
                         {!isLead && t.status === "TODO" ? null : <StatusBadge status={t.status} />}
                         {/* Advance button for non-lead employees */}
-                        {!isLead && ["TODO", "IN_PROGRESS"].includes(t.status) && (
+                        {!isLead && ["TODO"].includes(t.status) && (
                           <button
                             onClick={() => handleAdvance(t)}
                             disabled={advancing === t._id}
-                            className="px-2 py-0.5 text-[9px] tracking-[0.1em] uppercase font-bold bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+                            className="px-2 py-0.5 text-[9px] tracking-[0.1em] uppercase font-bold bg-[#47ff8a]/10 border border-[#47ff8a]/30 text-[#47ff8a] hover:bg-[#47ff8a]/20 transition-colors disabled:opacity-50"
                           >
                             {advancing === t._id
                               ? <Loader2 className="w-3 h-3 animate-spin inline" />
-                              : t.status === "TODO" ? "START" : "FINISH"}
+                              : "Mark Complete"}
                           </button>
                         )}
                       </div>

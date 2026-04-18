@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -43,7 +43,7 @@ import {
   TASK_PRIORITY_META,
 } from "@/services/taskService";
 import { createBug, BUG_SEVERITIES } from "@/services/bugService";
-import { getUsers } from "@/services/userService";
+import { getColleagues } from "@/services/userService";
 
 /* ── Status Colors ─────────────────────────────────────────── */
 const TASK_COLOR = {
@@ -52,6 +52,14 @@ const TASK_COLOR = {
   IN_REVIEW: "text-[#e8a847] border-[#e8a847]/20 bg-[#e8a847]/10",
   DONE: "text-[#47ff8a] border-[#47ff8a]/20 bg-[#47ff8a]/10",
   REJECTED: "text-[#ff4747] border-[#ff4747]/20 bg-[#ff4747]/10",
+};
+
+const TASK_STATUS_LABEL = {
+  TODO: "Pending",
+  IN_PROGRESS: "In Progress",
+  IN_REVIEW: "In Review",
+  DONE: "Completed",
+  REJECTED: "Rejected",
 };
 
 const DEFAULT_TESTING_PHASES = [
@@ -69,7 +77,7 @@ function StatusBadge({ status }) {
     <span
       className={`inline-flex px-2 py-0.5 text-[10px] tracking-[0.1em] uppercase font-bold border ${c}`}
     >
-      {status?.replace(/_/g, " ")}
+      {TASK_STATUS_LABEL[status] || status?.replace(/_/g, " ")}
     </span>
   );
 }
@@ -862,6 +870,210 @@ function BugModal({
   );
 }
 
+/* ── Task Details Modal (read-only + proof submission) ──────── */
+function TaskDetailsModal({ task, onClose, onProofSubmit }) {
+  const [note, setNote] = useState("");
+  const [proofFile, setProofFile] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const fileRef = useRef(null);
+
+  const contributors = (task.contributors || []).map(c => c.userId?.name || "—");
+  const reviewers = (task.reviewers || []).map(r => r.userId?.name || "—");
+
+  function fmt(d) {
+    if (!d) return "—";
+    return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  async function handleSubmitProof() {
+    if (!note.trim() && !proofFile) return;
+    try {
+      setSubmitting(true);
+      await onProofSubmit(task._id, note.trim(), proofFile);
+      setSubmitted(true);
+      setNote("");
+      setProofFile(null);
+    } catch {
+      /* */
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <ModalShell title="Task Details" icon={FileText} onClose={onClose} saving={submitting}>
+      <div className="px-6 py-5 space-y-4 max-h-[75vh] overflow-y-auto">
+        {/* Title + status */}
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[15px] font-bold text-foreground">{task.title}</p>
+            {task.description && (
+              <p className="text-[12px] text-foreground-muted mt-1 leading-relaxed">{task.description}</p>
+            )}
+          </div>
+          <span className={`shrink-0 inline-flex px-2 py-0.5 text-[10px] tracking-[0.1em] uppercase font-bold border ${TASK_COLOR[task.status] || TASK_COLOR.TODO}`}>
+            {TASK_STATUS_LABEL[task.status] || task.status?.replace(/_/g, " ")}
+          </span>
+        </div>
+
+        {/* Meta grid */}
+        <div className="grid grid-cols-2 gap-3 border border-outline bg-surface-container p-4">
+          <div>
+            <p className="text-[9px] uppercase tracking-wider text-foreground-muted mb-0.5">Priority</p>
+            <p className="text-[12px] font-semibold text-foreground">{task.priority || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[9px] uppercase tracking-wider text-foreground-muted mb-0.5">Deadline</p>
+            <p className="text-[12px] font-semibold text-foreground">{fmt(task.deadline)}</p>
+          </div>
+          <div>
+            <p className="text-[9px] uppercase tracking-wider text-foreground-muted mb-0.5">Start Time</p>
+            <p className="text-[12px] font-semibold text-foreground">{task.startTime || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[9px] uppercase tracking-wider text-foreground-muted mb-0.5">End Time</p>
+            <p className="text-[12px] font-semibold text-foreground">{task.endTime || "—"}</p>
+          </div>
+        </div>
+
+        {/* Assignees */}
+        {(contributors.length > 0 || reviewers.length > 0) && (
+          <div className="space-y-2">
+            {contributors.length > 0 && (
+              <div>
+                <p className="text-[9px] uppercase tracking-wider text-foreground-muted mb-1">Contributors</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {contributors.map((n, i) => (
+                    <span key={i} className="px-2 py-0.5 text-[11px] border border-primary/30 bg-primary/10 text-primary font-medium">{n}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {reviewers.length > 0 && (
+              <div>
+                <p className="text-[9px] uppercase tracking-wider text-foreground-muted mb-1">Reviewers</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {reviewers.map((n, i) => (
+                    <span key={i} className="px-2 py-0.5 text-[11px] border border-[#47c8ff]/30 bg-[#47c8ff]/10 text-[#47c8ff] font-medium">{n}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Existing completion note */}
+        {task.completionNote && (
+          <div className="border border-primary/20 bg-primary/5 p-3">
+            <p className="text-[9px] uppercase tracking-wider text-primary font-bold mb-1">Completion Note</p>
+            <p className="text-[12px] text-foreground leading-relaxed">{task.completionNote}</p>
+          </div>
+        )}
+
+        {/* Admin/Lead notes — visible to employee */}
+        {(task.notes || []).length > 0 && (
+          <div className="space-y-2">
+            <p className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground-muted">
+              Notes from Lead / Admin
+            </p>
+            {(task.notes || []).map((n, i) => (
+              <div key={i} className="border border-outline bg-surface-container px-4 py-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-foreground">{n.authorName || "Admin"}</span>
+                  <span className="text-[10px] text-foreground-muted">
+                    {n.createdAt ? new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}
+                  </span>
+                </div>
+                <p className="text-[12px] text-foreground-muted leading-relaxed">{n.text}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Existing attachments */}
+        {task.attachments?.length > 0 && (
+          <div>
+            <p className="text-[9px] uppercase tracking-wider text-foreground-muted mb-2">Attachments</p>
+            <div className="space-y-1.5">
+              {task.attachments.map((att) => (
+                <a key={att.publicId} href={att.url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-2 border border-outline bg-surface-container hover:border-primary hover:bg-primary/5 transition-colors"
+                >
+                  <Paperclip className="w-3 h-3 text-foreground-muted shrink-0" />
+                  <span className="text-[12px] text-primary hover:underline truncate">{att.fileName}</span>
+                  <span className="text-[10px] text-foreground-muted ml-auto shrink-0">{att.fileType}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Submit Proof / Details ── */}
+        <div className="border-t border-outline pt-4 space-y-3">
+          <p className="text-[10px] tracking-[0.15em] uppercase font-bold text-foreground">
+            Submit Task Details / Proof
+          </p>
+          {submitted && (
+            <div className="flex items-center gap-2 px-3 py-2 border border-[#47ff8a]/30 bg-[#47ff8a]/5 text-[#47ff8a] text-[12px]">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> Details submitted successfully.
+            </div>
+          )}
+          <div>
+            <label className="block text-[10px] tracking-[0.12em] uppercase text-foreground-muted mb-1.5">
+              Note / Description
+            </label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              placeholder="Describe what you did, any blockers, or progress details..."
+              className="w-full bg-surface-container border border-outline px-3 py-2.5 text-[12px] text-foreground placeholder-foreground-muted focus:outline-none focus:border-primary transition-colors resize-none"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] tracking-[0.12em] uppercase text-foreground-muted mb-1.5">
+              Proof / Attachment (optional)
+            </label>
+            <input ref={fileRef} type="file" accept="image/*,.pdf,.docx" className="hidden"
+              onChange={(e) => { setProofFile(e.target.files?.[0] || null); e.target.value = ""; }}
+            />
+            {proofFile ? (
+              <div className="flex items-center gap-2 px-3 py-2 border border-primary/30 bg-primary/5">
+                <Paperclip className="w-3 h-3 text-primary shrink-0" />
+                <span className="text-[12px] text-primary truncate flex-1">{proofFile.name}</span>
+                <button type="button" onClick={() => setProofFile(null)} className="text-foreground-muted hover:text-[#ff4747]">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <button type="button" onClick={() => fileRef.current?.click()}
+                className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-outline hover:border-primary hover:bg-primary/5 text-foreground-muted hover:text-primary transition-colors"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span className="text-[10px] tracking-widest uppercase font-bold">Attach proof file</span>
+              </button>
+            )}
+          </div>
+          <button
+            onClick={handleSubmitProof}
+            disabled={submitting || (!note.trim() && !proofFile)}
+            className="w-full py-2.5 text-[11px] tracking-[0.15em] uppercase font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-40"
+          >
+            {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+            {submitting ? "Submitting..." : "Submit Details"}
+          </button>
+        </div>
+      </div>
+      <div className="px-6 pb-5 pt-2">
+        <button onClick={onClose} className="w-full py-2.5 text-[11px] tracking-[0.15em] uppercase font-bold border border-outline text-foreground-muted hover:text-foreground transition-colors">
+          Close
+        </button>
+      </div>
+    </ModalShell>
+  );
+}
+
 /* ── Main Page ──────────────────────────────────────────────── */
 export default function EmployeeProjectDetailPage() {
   const router = useRouter();
@@ -880,6 +1092,7 @@ export default function EmployeeProjectDetailPage() {
   const [reviewModal, setReviewModal] = useState(null);
   const [deleteModal, setDeleteModal] = useState(null);
   const [bugModal, setBugModal] = useState(null); // null | "global" | taskId
+  const [detailsModal, setDetailsModal] = useState(null); // null | task object
   const [submittingProject, setSubmittingProject] = useState(false);
   const [phaseUpdating, setPhaseUpdating] = useState(null);
   const [deploying, setDeploying] = useState(false);
@@ -902,7 +1115,7 @@ export default function EmployeeProjectDetailPage() {
       const [projR, tasksR, usrsR] = await Promise.allSettled([
         getProject(params.id),
         getTasks(params.id),
-        getUsers(),
+        getColleagues(),
       ]);
       if (projR.status === "fulfilled") setProject(projR.value);
       else {
@@ -925,7 +1138,7 @@ export default function EmployeeProjectDetailPage() {
   if (loading || !user) return <AuthLoader />;
 
   const isPM = user?.role === "project_manager" || user?.role === "lead";
-  const isDev = user?.role === "developer" || user?.role === "contributor";
+  const isDev = user?.role === "developer" || user?.role === "contributor" || user?.role === "employee";
   const isTester = user?.role === "tester" || user?.role === "reviewer";
 
   async function handleSaveTask(payload, taskId) {
@@ -961,6 +1174,19 @@ export default function EmployeeProjectDetailPage() {
     if (nextStatus === "REJECTED" && rejectNote)
       payload.completionNote = `[REJECTED] ${rejectNote}`;
     await updateTask(taskId, payload);
+    setTasks(await getTasks(params.id));
+  }
+
+  async function handleProofSubmit(taskId, note, file) {
+    // Save the completion note
+    if (note) {
+      await updateTask(taskId, { completionNote: note });
+    }
+    // Upload attachment if provided
+    if (file) {
+      await uploadTaskAttachment(taskId, file);
+    }
+    // Refresh tasks to show updated data
     setTasks(await getTasks(params.id));
   }
 
@@ -1264,6 +1490,12 @@ export default function EmployeeProjectDetailPage() {
                           {t.attachments.length > 1 ? "s" : ""}
                         </p>
                       )}
+                      {/* Show note indicator if admin/lead left notes */}
+                      {(t.notes || []).length > 0 && (
+                        <p className="text-[10px] text-[#e8a847] mt-0.5 flex items-center gap-1">
+                          <FileText className="w-3 h-3" /> {t.notes.length} note{t.notes.length > 1 ? "s" : ""} from lead
+                        </p>
+                      )}
                       {(t.startTime || t.endTime) && (
                         <p className="text-[10px] text-foreground-muted mt-0.5 flex items-center gap-1">
                           <Clock className="w-3 h-3" /> {t.startTime || "—"} →{" "}
@@ -1309,6 +1541,14 @@ export default function EmployeeProjectDetailPage() {
                     </p>
 
                     <div className="flex items-center gap-1.5 flex-wrap">
+                      {/* Details button — visible to all */}
+                      <button
+                        onClick={() => setDetailsModal(t)}
+                        className="flex items-center gap-1 px-2 py-1.5 border border-outline text-foreground-muted hover:text-foreground hover:border-foreground-muted text-[9px] tracking-[0.1em] uppercase font-bold transition-colors"
+                        title="View details"
+                      >
+                        <FileText className="w-3 h-3" /> Details
+                      </button>
                       {isPM && (
                         <>
                           <button
@@ -1329,64 +1569,37 @@ export default function EmployeeProjectDetailPage() {
                           </button>
                         </>
                       )}
-                      {isDev && isMyContrib && (
+                      {/* Contributor actions — show for any assigned contributor regardless of role */}
+                      {isMyContrib && (
                         <>
                           {t.status === "TODO" && (
                             <button
                               disabled={actionLoading === t._id}
-                              onClick={() => handleAdvance(t._id)}
-                              className="flex items-center gap-1 px-2 py-1.5 border border-[#47c8ff]/30 text-[#47c8ff] hover:bg-[#47c8ff]/10 text-[9px] tracking-[0.1em] uppercase font-bold transition-colors disabled:opacity-50"
+                              onClick={async () => {
+                                try {
+                                  setActionLoading(t._id);
+                                  await updateTask(t._id, { status: "DONE", completedAt: new Date().toISOString() });
+                                  setTasks(await getTasks(params.id));
+                                } catch { /* */ } finally { setActionLoading(null); }
+                              }}
+                              className="flex items-center gap-1 px-2 py-1.5 border border-[#47ff8a]/30 text-[#47ff8a] hover:bg-[#47ff8a]/10 text-[9px] tracking-[0.1em] uppercase font-bold transition-colors disabled:opacity-50"
                             >
-                              {actionLoading === t._id ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <ChevronRight className="w-3 h-3" />
-                              )}{" "}
-                              Start
+                              {actionLoading === t._id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+                              Mark Complete
                             </button>
-                          )}
-                          {t.status === "IN_PROGRESS" && (
-                            <button
-                              onClick={() => setSubmitReviewModal(t)}
-                              className="flex items-center gap-1 px-2 py-1.5 border border-primary/30 text-primary hover:bg-primary/10 text-[9px] tracking-[0.1em] uppercase font-bold transition-colors"
-                            >
-                              <Send className="w-3 h-3" /> Submit
-                            </button>
-                          )}
-                          {t.status === "IN_REVIEW" && (
-                            <span className="text-[9px] tracking-[0.1em] uppercase font-bold text-[#e8a847] border border-[#e8a847]/30 bg-[#e8a847]/10 px-2 py-1.5">
-                              In Review
-                            </span>
                           )}
                           {t.status === "DONE" && (
                             <span className="text-[9px] tracking-[0.1em] uppercase font-bold text-[#47ff8a] border border-[#47ff8a]/30 bg-[#47ff8a]/10 px-2 py-1.5">
-                              Done
+                              Completed
                             </span>
                           )}
                         </>
                       )}
-                      {isTester && isMyReviewer && (
-                        <>
-                          {t.status === "IN_REVIEW" && (
-                            <button
-                              onClick={() => setReviewModal(t)}
-                              className="flex items-center gap-1 px-2 py-1.5 border border-[#e8a847]/30 text-[#e8a847] hover:bg-[#e8a847]/10 text-[9px] tracking-[0.1em] uppercase font-bold transition-colors"
-                            >
-                              <CheckCircle2 className="w-3 h-3" /> Review
-                            </button>
-                          )}
-                          {t.status === "DONE" && (
-                            <span className="text-[9px] tracking-[0.1em] uppercase font-bold text-[#47ff8a] border border-[#47ff8a]/30 bg-[#47ff8a]/10 px-2 py-1.5">
-                              Approved
-                            </span>
-                          )}
-                          <button
-                            onClick={() => setBugModal(t._id)}
-                            className="flex items-center gap-1 px-2 py-1.5 border border-[#ff4747]/30 text-[#ff4747] hover:bg-[#ff4747]/10 text-[9px] tracking-[0.1em] uppercase font-bold transition-colors"
-                          >
-                            <Bug className="w-3 h-3" /> Bug
-                          </button>
-                        </>
+                      {/* Reviewer actions — removed, reviewers just view */}
+                      {isMyReviewer && t.status === "DONE" && (
+                        <span className="text-[9px] tracking-[0.1em] uppercase font-bold text-[#47ff8a] border border-[#47ff8a]/30 bg-[#47ff8a]/10 px-2 py-1.5">
+                          Completed
+                        </span>
                       )}
                     </div>
                   </div>
@@ -1475,6 +1688,13 @@ export default function EmployeeProjectDetailPage() {
           allUsers={users}
           onClose={() => setBugModal(null)}
           onSave={loadData}
+        />
+      )}
+      {detailsModal && (
+        <TaskDetailsModal
+          task={detailsModal}
+          onClose={() => setDetailsModal(null)}
+          onProofSubmit={handleProofSubmit}
         />
       )}
     </div>
