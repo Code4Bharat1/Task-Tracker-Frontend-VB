@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
   const permissionsLoaded = permState.loaded;
 
   const loadPermissions = useCallback(async (role) => {
-    if (role === "admin" || role === "super_admin" || role === "department_head") {
+    if (role === "admin" || role === "super_admin") {
       setPermState({ permissions: DEFAULT_PERMS, loaded: true });
       return;
     }
@@ -52,7 +52,8 @@ export function AuthProvider({ children }) {
       clearTimeout(timeout);
 
       let roleKey;
-      if (role === "lead") roleKey = "lead";
+      if (role === "department_head") roleKey = "department_head";
+      else if (role === "lead") roleKey = "lead";
       else roleKey = "employee"; // contributor, reviewer, employee all use employee permissions
 
       const rolePerms = data?.rolePermissions?.[roleKey];
@@ -164,8 +165,6 @@ export function AuthProvider({ children }) {
   function can(resource, action) {
     const role = user?.role || user?.globalRole;
     if (role === "admin" || role === "super_admin") return true;
-    // department_head always gets full access (not permission-restricted)
-    if (role === "department_head") return true;
     return permissions?.[resource]?.[action] ?? false;
   }
 

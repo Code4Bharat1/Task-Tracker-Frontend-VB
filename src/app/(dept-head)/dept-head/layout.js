@@ -171,7 +171,7 @@ function ProfileDropdown({ user, onLogout }) {
 export default function DeptHeadLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, loading, logout, can } = useAuth();
+  const { user, loading, logout, can, permissionsLoaded } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -190,7 +190,7 @@ export default function DeptHeadLayout({ children }) {
     }
   }, [user, loading, router]);
 
-  if (loading || !user) return <AuthLoader />;
+  if (loading || !user || !permissionsLoaded) return <AuthLoader />;
 
   const filteredNav = NAV_ITEMS.filter((item) => {
     const resource = NAV_PERMISSION_MAP[item.href];

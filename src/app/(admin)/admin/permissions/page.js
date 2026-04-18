@@ -83,7 +83,7 @@ const ROLES = [
     color: "text-[#47c8ff]",
     bg: "bg-[#47c8ff]/10",
     border: "border-[#47c8ff]/30",
-    description: "Manages a department, its Employee and projects",
+    description: "Manages a department, its employees and projects",
     defaults: {
       users:        { create: true,  read: true,  update: true,  delete: false },
       projects:     { create: true,  read: true,  update: true,  delete: true  },
@@ -123,12 +123,12 @@ const ROLES = [
     border: "border-[#e8a847]/30",
     description: "Contributor/Reviewer — works on assigned tasks",
     defaults: {
-      users:        { create: false, read: true,  update: false, delete: false },
+      users:        { create: false, read: false, update: false, delete: false },
       projects:     { create: false, read: true,  update: false, delete: false },
       tasks:        { create: false, read: true,  update: true,  delete: false },
       dailyLogs:    { create: true,  read: true,  update: true,  delete: false },
       bugs:         { create: true,  read: true,  update: true,  delete: false },
-      reports:      { create: true,  read: true,  update: false, delete: false },
+      reports:      { create: false, read: true,  update: false, delete: false },
       ktDocuments:  { create: false, read: true,  update: false, delete: false },
       leaderboard:  { create: false, read: true,  update: false, delete: false },
       activityLogs: { create: false, read: false, update: false, delete: false },
@@ -201,7 +201,7 @@ function PermToggle({ checked, onChange, disabled }) {
 export default function PermissionsPage() {
   const { user } = useAuth();
   const [perms, setPerms] = useState(mergeWithDefaults({}));
-  const [activeRole, setActiveRole] = useState(ROLES[0].key);
+  const [activeRole, setActiveRole] = useState("department_head");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -325,7 +325,7 @@ export default function PermissionsPage() {
       <div className="flex items-start gap-3 px-4 py-3 border border-primary/20 bg-primary/5">
         <Shield className="w-4 h-4 text-primary shrink-0 mt-0.5" />
         <p className="text-[12px] text-foreground-muted">
-          <span className="text-primary font-bold">Admin</span> always has full access to all features and cannot be restricted.
+          <span className="text-primary font-bold">Admin</span> always has full access to all features and cannot be restricted. All other roles are configurable below.
         </p>
       </div>
 
@@ -380,7 +380,12 @@ export default function PermissionsPage() {
           </div>
 
           <div className="divide-y divide-outline">
-            {RESOURCES.map((res) => {
+            {RESOURCES.filter((res) => {
+              // User Management is only configurable for department_head and lead
+              // contributors/reviewers (employee key) cannot manage users regardless
+              if (res.key === "users" && activeRole === "employee") return false;
+              return true;
+            }).map((res) => {
               const Icon = res.icon;
               const current = perms[activeRole]?.[res.key] ?? {};
               const allOn = res.actions.every((a) => current[a]);
@@ -439,7 +444,7 @@ export default function PermissionsPage() {
             {activeRoleMeta?.label} — Permission Summary
           </p>
           <div className="flex flex-wrap gap-2">
-            {RESOURCES.map((res) => {
+            {RESOURCES.filter((res) => !(res.key === "users" && activeRole === "employee")).map((res) => {
               const current = perms[activeRole]?.[res.key] ?? {};
               const granted = res.actions.filter((a) => current[a]);
               if (granted.length === 0) return null;
