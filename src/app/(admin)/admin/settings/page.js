@@ -107,7 +107,7 @@ function Section({ icon: Icon, title, children }) {
 }
 
 // ─── Profile Section Component ─────────────────────────────────
-function ProfileSection({ user, setUser }) {
+function ProfileSection({ user, setUser, companyName }) {
   const [name, setName] = useState("");
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -291,7 +291,7 @@ function ProfileSection({ user, setUser }) {
               </span>
               <span className="flex items-center gap-1.5">
                 <Building2 className="w-3.5 h-3.5" />
-                {user?.companyId?.companyName || "Your Company"}
+                {companyName || user?.companyId?.companyName || "Your Company"}
               </span>
             </div>
           </div>
@@ -470,7 +470,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* My Profile Section */}
-      <ProfileSection user={user} setUser={setUser} />
+      <ProfileSection user={user} setUser={setUser} companyName={form.companyName} />
 
       {/* Company Settings Header */}
       <div className="flex flex-wrap items-center justify-between gap-y-3">

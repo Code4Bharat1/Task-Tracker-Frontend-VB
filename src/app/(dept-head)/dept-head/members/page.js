@@ -404,6 +404,7 @@ export default function DeptHeadMembers() {
         <EmployeeModal
           mode="add"
           departments={departments}
+          currentDepartmentId={user?.departmentId ?? ""}
           saving={saving}
           onClose={() => setModal(null)}
           onSave={handleSave}
@@ -457,7 +458,7 @@ function Field({ label, error, children }) {
 }
 
 // ─── Add / Edit Modal ─────────────────────────────────────────
-function EmployeeModal({ mode, initial, departments, onClose, onSave, saving }) {
+function EmployeeModal({ mode, initial, departments, currentDepartmentId, onClose, onSave, saving }) {
   const [form, setForm] = useState(
     initial
       ? {
@@ -471,7 +472,7 @@ function EmployeeModal({ mode, initial, departments, onClose, onSave, saving }) 
           name: "",
           email: "",
           globalRole: "employee",
-          departmentId: "",
+          departmentId: currentDepartmentId ?? "",
           isActive: true,
         },
   );

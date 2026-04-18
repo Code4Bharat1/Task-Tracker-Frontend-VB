@@ -179,8 +179,10 @@ export default function ScoreboardPage() {
 
   if (loading) return <ScoreboardSkeleton />;
 
-  // Build scoreboard: only include employees
-  const employees = users.filter((u) => u.globalRole === "employee");
+  // Build scoreboard: include all employee-tier roles
+  const employees = users.filter((u) =>
+    ["employee", "lead", "contributor", "reviewer"].includes(u.globalRole)
+  );
   const threshold = getDateThreshold(filterPeriod);
 
   const scoreboard = employees

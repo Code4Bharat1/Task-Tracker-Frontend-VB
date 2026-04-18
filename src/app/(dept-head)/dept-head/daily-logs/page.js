@@ -202,7 +202,7 @@ function DeptHeadDailyLogsPageInner() {
   const submittedCount = filtered.length;
   const missingUsers = dateFilter
     ? (users || []).filter((u) =>
-        u.globalRole === "employee" &&
+        ["employee", "lead", "contributor", "reviewer"].includes(u.globalRole) &&
         !filtered.some((l) => l.userId === u._id)
       )
     : [];

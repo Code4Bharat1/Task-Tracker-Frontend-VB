@@ -792,8 +792,8 @@ export default function ProjectsOverview() {
             (p.managerIds && p.managerIds[0]) || p.managerId || null;
           const tester = (p.testerNames && p.testerNames[0]) || p.tester || "";
           const members = p.developerNames || p.members || [];
-          const modules = p.modulesTotal ?? p.modules ?? 0;
-          const modulesCompleted = p.modulesCompleted ?? 0;
+          const modules = p.tasksTotal ?? p.modulesTotal ?? p.modules ?? 0;
+          const modulesCompleted = p.tasksCompleted ?? p.modulesCompleted ?? 0;
           const status = p.status ?? "IN_PROGRESS";
           const deadline = p.deadline ?? p.deadlineAt ?? null;
           const created = p.created_at ?? p.createdAt ?? p.created;
@@ -878,8 +878,8 @@ export default function ProjectsOverview() {
         created?.tester ||
         "";
       const members = created?.developerNames || created?.members || [];
-      const modules = created?.modulesTotal ?? created?.modules ?? 0;
-      const modulesCompleted = created?.modulesCompleted ?? 0;
+      const modules = created?.tasksTotal ?? created?.modulesTotal ?? created?.modules ?? 0;
+      const modulesCompleted = created?.tasksCompleted ?? created?.modulesCompleted ?? 0;
       const status = created?.status ?? "IN_PROGRESS";
       const deadline = created?.deadline ?? null;
       const mapped = {
@@ -935,8 +935,8 @@ export default function ProjectsOverview() {
         updated?.tester ||
         "";
       const members = updated?.developerNames || updated?.members || [];
-      const modules = updated?.modulesTotal ?? updated?.modules ?? 0;
-      const modulesCompleted = updated?.modulesCompleted ?? 0;
+      const modules = updated?.tasksTotal ?? updated?.modulesTotal ?? updated?.modules ?? 0;
+      const modulesCompleted = updated?.tasksCompleted ?? updated?.modulesCompleted ?? 0;
       const status = updated?.status ?? "IN_PROGRESS";
       const deadline = updated?.deadline ?? null;
       const mapped = {

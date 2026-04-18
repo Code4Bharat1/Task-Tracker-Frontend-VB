@@ -21,6 +21,7 @@ import {
   Mail,
   Settings,
   User,
+  FileText,
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import Avatar from "@/components/Avatar";
@@ -34,6 +35,7 @@ const NAV_PERMISSION_MAP = {
   "/dept-head/daily-logs": "dailyLogs",
   "/dept-head/members":    "users",
   "/dept-head/scoreboard": "leaderboard",
+  "/dept-head/reports":    "reports",
 };
 
 const NAV_ITEMS = [
@@ -44,6 +46,7 @@ const NAV_ITEMS = [
   { label: "Employee", icon: Users, href: "/dept-head/members" },
   { label: "Scoreboard", icon: BarChart3, href: "/dept-head/scoreboard" },
   { label: "Daily Logs", icon: BookCheck, href: "/dept-head/daily-logs" },
+  { label: "Reports", icon: FileText, href: "/dept-head/reports" },
 ];
 
 // ─── Profile Dropdown Component ─────────────────────────────────

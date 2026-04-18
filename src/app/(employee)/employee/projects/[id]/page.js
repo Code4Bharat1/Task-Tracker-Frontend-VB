@@ -203,8 +203,8 @@ function TaskModal({ task, allUsers, onClose, onSave }) {
     description: task?.description || "",
     priority: task?.priority || "MEDIUM",
     deadline: task?.deadline ? task.deadline.slice(0, 10) : "",
-    startTime: task?.startTime || "",
-    endTime: task?.endTime || "",
+    startTime: task?.startTime ? task.startTime.slice(0, 16) : "",
+    endTime: task?.endTime ? task.endTime.slice(0, 16) : "",
   });
   const [contributors, setContributors] = useState(
     (task?.contributors || []).map((c) => c.userId?._id || c.userId),
@@ -243,13 +243,19 @@ function TaskModal({ task, allUsers, onClose, onSave }) {
     }
   }
 
-  const devUsers = allUsers.filter(
-    (u) => u.role === "developer" || u.globalRole === "developer" ||
-           u.role === "contributor" || u.globalRole === "contributor",
+  // Separate users by role
+  const leadUsers = allUsers.filter((u) =>
+    ["lead", "project_manager"].includes(u.role || u.globalRole || "")
   );
-  const testerUsers = allUsers.filter(
-    (u) => u.role === "tester" || u.globalRole === "tester" ||
-           u.role === "reviewer" || u.globalRole === "reviewer",
+  const devUsers = allUsers.filter((u) =>
+    ["contributor", "developer"].includes(u.role || u.globalRole || "")
+  );
+  const testerUsers = allUsers.filter((u) =>
+    ["reviewer", "tester"].includes(u.role || u.globalRole || "")
+  );
+  // Generic employees can be either contributors or reviewers, but not both
+  const employeeUsers = allUsers.filter((u) =>
+    (u.role || u.globalRole || "") === "employee"
   );
 
   return (
@@ -300,21 +306,51 @@ function TaskModal({ task, allUsers, onClose, onSave }) {
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Start Time">
-            <input
-              type="time"
-              value={form.startTime}
-              onChange={(e) => setForm({ ...form, startTime: e.target.value })}
-              className="w-full bg-surface-container border border-outline px-3 py-2.5 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors [color-scheme:dark]"
-            />
+          <Field label="Start Date & Time">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <DatePicker
+                  value={form.startTime ? form.startTime.slice(0, 10) : ""}
+                  onChange={(date) => {
+                    const time = form.startTime ? form.startTime.slice(11, 16) : "00:00";
+                    setForm({ ...form, startTime: date ? `${date}T${time}` : "" });
+                  }}
+                  placeholder="Start date"
+                />
+              </div>
+              <input
+                type="time"
+                value={form.startTime ? form.startTime.slice(11, 16) : ""}
+                onChange={(e) => {
+                  const date = form.startTime ? form.startTime.slice(0, 10) : new Date().toISOString().slice(0, 10);
+                  setForm({ ...form, startTime: `${date}T${e.target.value}` });
+                }}
+                className="w-24 bg-surface-container border border-outline px-2 py-2.5 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors [color-scheme:dark]"
+              />
+            </div>
           </Field>
-          <Field label="End Time">
-            <input
-              type="time"
-              value={form.endTime}
-              onChange={(e) => setForm({ ...form, endTime: e.target.value })}
-              className="w-full bg-surface-container border border-outline px-3 py-2.5 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors [color-scheme:dark]"
-            />
+          <Field label="End Date & Time">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <DatePicker
+                  value={form.endTime ? form.endTime.slice(0, 10) : ""}
+                  onChange={(date) => {
+                    const time = form.endTime ? form.endTime.slice(11, 16) : "00:00";
+                    setForm({ ...form, endTime: date ? `${date}T${time}` : "" });
+                  }}
+                  placeholder="End date"
+                />
+              </div>
+              <input
+                type="time"
+                value={form.endTime ? form.endTime.slice(11, 16) : ""}
+                onChange={(e) => {
+                  const date = form.endTime ? form.endTime.slice(0, 10) : new Date().toISOString().slice(0, 10);
+                  setForm({ ...form, endTime: `${date}T${e.target.value}` });
+                }}
+                className="w-24 bg-surface-container border border-outline px-2 py-2.5 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors [color-scheme:dark]"
+              />
+            </div>
           </Field>
         </div>
         {isEdit && (
@@ -393,17 +429,59 @@ function TaskModal({ task, allUsers, onClose, onSave }) {
             </div>
           </Field>
         )}
+        {/* Lead selector — single select dropdown */}
+        {leadUsers.length > 0 && (
+          <Field label="Lead (Supervisor)">
+            <div className="relative">
+              <select
+                value={contributors.find((id) => leadUsers.some((u) => (u._id || u.id) === id)) || ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  // Remove any previously selected lead from contributors, add new one
+                  const nonLeadContribs = contributors.filter(
+                    (id) => !leadUsers.some((u) => (u._id || u.id) === id)
+                  );
+                  setContributors(val ? [...nonLeadContribs, val] : nonLeadContribs);
+                }}
+                className="w-full appearance-none bg-surface-container border border-outline px-3 py-2.5 pr-8 text-[12px] text-foreground focus:outline-none focus:border-primary transition-colors cursor-pointer"
+              >
+                <option value="">— None —</option>
+                {leadUsers.map((u) => (
+                  <option key={u._id || u.id} value={u._id || u.id}>{u.name}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-foreground-muted pointer-events-none" />
+            </div>
+          </Field>
+        )}
         <UserMultiSelect
-          label="Contributors (Developers)"
-          users={devUsers}
-          selected={contributors}
-          onChange={setContributors}
+          label="Contributors"
+          users={[...devUsers, ...employeeUsers].filter((u) => 
+            !reviewers.includes(u._id || u.id)
+          )}
+          selected={contributors.filter((id) => !leadUsers.some((u) => (u._id || u.id) === id))}
+          onChange={(newContribs) => {
+            // Keep any selected lead + new contributor selection
+            const selectedLead = contributors.find((id) => leadUsers.some((u) => (u._id || u.id) === id));
+            const finalContribs = selectedLead ? [selectedLead, ...newContribs] : newContribs;
+            setContributors(finalContribs);
+            
+            // Remove any newly selected contributors from reviewers to prevent overlap
+            setReviewers(prev => prev.filter(reviewerId => !finalContribs.includes(reviewerId)));
+          }}
         />
         <UserMultiSelect
-          label="Reviewers (Testers)"
-          users={testerUsers}
+          label="Reviewers"
+          users={[...testerUsers, ...employeeUsers].filter((u) => 
+            !contributors.includes(u._id || u.id)
+          )}
           selected={reviewers}
-          onChange={setReviewers}
+          onChange={(newReviewers) => {
+            setReviewers(newReviewers);
+            
+            // Remove any newly selected reviewers from contributors to prevent overlap
+            setContributors(prev => prev.filter(contributorId => !newReviewers.includes(contributorId)));
+          }}
         />
       </div>
       <div className="flex gap-2 px-6 pb-5 pt-2">
@@ -1651,7 +1729,13 @@ export default function EmployeeProjectDetailPage() {
       {taskModal && (
         <TaskModal
           task={taskModal.mode === "edit" ? taskModal.task : null}
-          allUsers={users}
+          allUsers={users.filter((u) => {
+            // Only show users from the same department as the project
+            const projDeptId = project?.departmentId?._id || project?.departmentId;
+            if (!projDeptId) return true; // no dept filter if project has no dept
+            const userDeptId = u.departmentId?._id || u.departmentId;
+            return String(userDeptId) === String(projDeptId);
+          })}
           onClose={() => setTaskModal(null)}
           onSave={handleSaveTask}
         />
