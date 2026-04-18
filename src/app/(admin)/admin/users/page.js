@@ -23,11 +23,13 @@ import {
 } from "@/services/userService";
 
 // ─── Constants ───────────────────────────────────────────────
-// SRS §5.1 — Global roles only
+// 3 main roles: Admin (system), Department Head, Employee (includes Lead, Contributor, Reviewer sub-types)
 const GLOBAL_ROLES = [
-  { value: "department_head", label: "Dept Head" },
- 
-  { value: "employee", label: "Employee" },
+  { value: "department_head", label: "Department Head" },
+  { value: "lead",            label: "Employee — Lead" },
+  { value: "contributor",     label: "Employee — Contributor" },
+  { value: "reviewer",        label: "Employee — Reviewer" },
+  { value: "employee",        label: "Employee" },
 ];
 
 const EMPTY_FORM = {
@@ -50,7 +52,11 @@ function roleBadge(role) {
   if (role === "department_head")
     return { label: "Dept Head", cls: "bg-[#47c8ff]/10 text-[#47c8ff] border-[#47c8ff]/20" };
   if (role === "lead")
-    return { label: "Lead", cls: "bg-[#c847ff]/10 text-[#c847ff] border-[#c847ff]/20" };
+    return { label: "Employee · Lead", cls: "bg-[#c847ff]/10 text-[#c847ff] border-[#c847ff]/20" };
+  if (role === "contributor")
+    return { label: "Employee · Contributor", cls: "bg-primary/10 text-primary border-primary/20" };
+  if (role === "reviewer")
+    return { label: "Employee · Reviewer", cls: "bg-[#47c8ff]/10 text-[#47c8ff] border-[#47c8ff]/20" };
   return { label: "Employee", cls: "bg-primary/10 text-primary border-primary/20" };
 }
 

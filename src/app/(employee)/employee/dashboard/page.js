@@ -79,7 +79,7 @@ export default function EmployeeDashboard() {
   useEffect(() => {
     if (!loading) {
       const r = ((user?.role || user?.globalRole || "") + "").toLowerCase();
-      const allowed = ["employee", "project_manager", "developer", "tester"];
+      const allowed = ["employee", "project_manager", "developer", "tester", "lead", "contributor", "reviewer"];
       const isAllowed =
         !!user &&
         (allowed.includes(r) ||
@@ -94,15 +94,15 @@ export default function EmployeeDashboard() {
 
   const r = ((user?.role || user?.globalRole || "") + "").toLowerCase();
   const ROLE_LABEL = {
-    project_manager: "Project Manager",
-    developer: "Developer",
-    tester: "Tester",
+    lead: "Lead",
+    contributor: "Contributor",
+    reviewer: "Reviewer",
+    project_manager: "Lead",
+    developer: "Contributor",
+    tester: "Reviewer",
     employee: "Employee",
   };
-  const roleLabel =
-    r.includes("lead") || r === "project_manager" || r === "project manager"
-      ? "Project Manager"
-      : (ROLE_LABEL[user.role] ?? "Employee");
+  const roleLabel = ROLE_LABEL[user.role] ?? "Employee";
 
   return (
     <div className="space-y-6">
@@ -115,16 +115,16 @@ export default function EmployeeDashboard() {
         </h1>
       </div>
 
-      {user.role === "project_manager" && (
+      {(user.role === "project_manager" || user.role === "lead") && (
         <PMDashboard user={user} router={router} />
       )}
-      {user.role === "developer" && (
+      {(user.role === "developer" || user.role === "contributor") && (
         <DeveloperDashboard user={user} router={router} />
       )}
-      {user.role === "tester" && (
+      {(user.role === "tester" || user.role === "reviewer") && (
         <TesterDashboard user={user} router={router} />
       )}
-      {user.role === "employee" && (
+      {(user.role === "employee" || (!["project_manager","lead","developer","contributor","tester","reviewer"].includes(user.role))) && (
         <GenericEmployeeDashboard user={user} router={router} />
       )}
     </div>

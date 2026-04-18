@@ -174,7 +174,8 @@ function LoginContent() {
   }, [searchParams]);
 
   // Don't flash the login form while auth state is being determined or redirect is in progress
-  if (loading || (!loading && user)) return <AuthLoader />;
+  if (loading) return null;
+  if (!loading && user) return null;
 
   async function handleLogin(e) {
     e.preventDefault();

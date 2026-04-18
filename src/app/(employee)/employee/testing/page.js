@@ -56,7 +56,7 @@ export default function TestingPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!loading && (!user || !["employee", "tester"].includes(user?.role)))
+    if (!loading && (!user || !["employee", "tester", "reviewer"].includes(user?.role)))
       router.replace("/login");
   }, [user, loading, router]);
 

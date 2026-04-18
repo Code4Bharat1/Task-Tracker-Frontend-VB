@@ -45,20 +45,24 @@ function StatusBadge({ status }) {
 
 function myRole(project, userId, userRole) {
   if (userRole === "lead") return "Lead";
+  if (userRole === "contributor") return "Contributor";
+  if (userRole === "reviewer") return "Reviewer";
   const uid = String(userId);
-  if ((project.managerIds || []).map(String).includes(uid)) return "Project Manager";
-  if ((project.testerIds || []).map(String).includes(uid)) return "Tester";
-  if ((project.developerIds || []).map(String).includes(uid)) return "Developer";
+  if ((project.managerIds || []).map(String).includes(uid)) return "Lead";
+  if ((project.testerIds || []).map(String).includes(uid)) return "Reviewer";
+  if ((project.developerIds || []).map(String).includes(uid)) return "Contributor";
   return "Member";
 }
 
 function RoleBadge({ role }) {
   const map = {
     "Lead": "text-[#c847ff] border-[#c847ff]/30 bg-[#c847ff]/10",
+    "Contributor": "text-primary border-primary/30 bg-primary/10",
+    "Reviewer": "text-[#47c8ff] border-[#47c8ff]/30 bg-[#47c8ff]/10",
     "Project Manager": "text-[#e8a847] border-[#e8a847]/30 bg-[#e8a847]/10",
     Tester: "text-[#c847ff] border-[#c847ff]/30 bg-[#c847ff]/10",
-    Developer: "text-primary   border-primary/30   bg-primary/10",
-    Member: "text-foreground-muted   border-foreground/15   bg-foreground/10",
+    Developer: "text-primary border-primary/30 bg-primary/10",
+    Member: "text-foreground-muted border-foreground/15 bg-foreground/10",
   };
   return (
     <span
@@ -83,7 +87,7 @@ function EmployeeProjectsPageInner() {
     if (
       !loading &&
       (!user ||
-        !["employee", "project_manager", "developer", "tester", "lead"].includes(
+        !["employee", "project_manager", "developer", "tester", "lead", "contributor", "reviewer"].includes(
           user?.role,
         ))
     )

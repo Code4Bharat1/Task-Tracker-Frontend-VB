@@ -345,7 +345,7 @@ function EmployeeBugsPageInner() {
     if (
       !loading &&
       (!user ||
-        !["employee", "project_manager", "developer", "tester", "lead"].includes(
+        !["employee", "project_manager", "developer", "tester", "lead", "contributor", "reviewer"].includes(
           user?.role,
         ))
     )

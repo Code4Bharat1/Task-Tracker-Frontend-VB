@@ -236,10 +236,12 @@ function TaskModal({ task, allUsers, onClose, onSave }) {
   }
 
   const devUsers = allUsers.filter(
-    (u) => u.role === "developer" || u.globalRole === "developer",
+    (u) => u.role === "developer" || u.globalRole === "developer" ||
+           u.role === "contributor" || u.globalRole === "contributor",
   );
   const testerUsers = allUsers.filter(
-    (u) => u.role === "tester" || u.globalRole === "tester",
+    (u) => u.role === "tester" || u.globalRole === "tester" ||
+           u.role === "reviewer" || u.globalRole === "reviewer",
   );
 
   return (
@@ -923,8 +925,8 @@ export default function EmployeeProjectDetailPage() {
   if (loading || !user) return <AuthLoader />;
 
   const isPM = user?.role === "project_manager" || user?.role === "lead";
-  const isDev = user?.role === "developer";
-  const isTester = user?.role === "tester";
+  const isDev = user?.role === "developer" || user?.role === "contributor";
+  const isTester = user?.role === "tester" || user?.role === "reviewer";
 
   async function handleSaveTask(payload, taskId) {
     if (taskId) await updateTask(taskId, payload);
@@ -1041,6 +1043,8 @@ export default function EmployeeProjectDetailPage() {
 
   const ROLE_BADGE = {
     lead: "text-[#c847ff] border-[#c847ff]/30 bg-[#c847ff]/10",
+    contributor: "text-primary border-primary/30 bg-primary/10",
+    reviewer: "text-[#47c8ff] border-[#47c8ff]/30 bg-[#47c8ff]/10",
     project_manager: "text-[#e8a847] border-[#e8a847]/30 bg-[#e8a847]/10",
     tester: "text-[#c847ff] border-[#c847ff]/30 bg-[#c847ff]/10",
     developer: "text-primary border-primary/30 bg-primary/10",

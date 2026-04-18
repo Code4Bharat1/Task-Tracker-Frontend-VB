@@ -264,7 +264,7 @@ function ProjectModal({ mode, initial, onClose, onSave, saving }) {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Project Manager">
+            <Field label="Lead">
               <div className="relative">
                 <select
                   value={form.managerId ?? "none"}
@@ -281,7 +281,7 @@ function ProjectModal({ mode, initial, onClose, onSave, saving }) {
                 <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-foreground-muted pointer-events-none" />
               </div>
             </Field>
-            <Field label="Tester">
+            <Field label="Reviewer">
               <div className="relative">
                 <select
                   value={form.testerId ?? "none"}

@@ -98,11 +98,11 @@ const ROLES = [
   },
   {
     key: "lead",
-    label: "Lead",
+    label: "Employee — Lead",
     color: "text-[#c847ff]",
     bg: "bg-[#c847ff]/10",
     border: "border-[#c847ff]/30",
-    description: "Project lead — assigns tasks, manages team Employee",
+    description: "Project lead — assigns tasks, manages team",
     defaults: {
       users:        { create: false, read: true,  update: false, delete: false },
       projects:     { create: true,  read: true,  update: true,  delete: false },
@@ -117,7 +117,7 @@ const ROLES = [
   },
   {
     key: "employee",
-    label: "Employee",
+    label: "Employee — Contributor/Reviewer",
     color: "text-[#e8a847]",
     bg: "bg-[#e8a847]/10",
     border: "border-[#e8a847]/30",
@@ -212,7 +212,10 @@ export default function PermissionsPage() {
   const loadPerms = useCallback(async () => {
     try {
       setLoading(true);
-      const { data } = await api.get("/companies/permissions/roles");
+      const { data } = await api.get("/companies/permissions/roles", {
+        params: { _t: Date.now() },
+        headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+      });
       setPerms(mergeWithDefaults(data.rolePermissions));
     } catch {
       // fallback to defaults silently

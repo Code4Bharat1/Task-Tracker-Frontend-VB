@@ -31,48 +31,61 @@ export function AuthProvider({ children }) {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [permissions, setPermissions] = useState(DEFAULT_PERMS);
+  const [permState, setPermState] = useState({ permissions: DEFAULT_PERMS, loaded: false });
+  const permissions = permState.permissions;
+  const permissionsLoaded = permState.loaded;
 
   const loadPermissions = useCallback(async (role) => {
-    if (role === "admin" || role === "super_admin") {
-      setPermissions(DEFAULT_PERMS);
+    if (role === "admin" || role === "super_admin" || role === "department_head") {
+      setPermState({ permissions: DEFAULT_PERMS, loaded: true });
       return;
     }
     try {
-      const { data } = await api.get("/companies/permissions/roles");
+      // 5 second timeout — never hang the app waiting for permissions
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const { data } = await api.get("/companies/permissions/roles", {
+        params: { _t: Date.now() },
+        headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
 
-      // department_head uses "department_head" key, lead uses "lead" key
       let roleKey;
-      if (role === "department_head") roleKey = "department_head";
-      else if (role === "lead") roleKey = "lead";
-      else roleKey = "employee";
+      if (role === "lead") roleKey = "lead";
+      else roleKey = "employee"; // contributor, reviewer, employee all use employee permissions
 
       const rolePerms = data?.rolePermissions?.[roleKey];
 
       if (rolePerms && Object.keys(rolePerms).length > 0) {
-        // Build permissions from DB — do NOT fall back to true for missing actions.
-        // If a resource exists in DB, use exactly what the DB says.
-        // If a resource is missing from DB entirely, fall back to DEFAULT_PERMS for that resource.
-        const merged = { ...DEFAULT_PERMS };
+        const merged = {};
         for (const resource of Object.keys(DEFAULT_PERMS)) {
           if (rolePerms[resource] !== undefined) {
-            // Resource is configured in DB — use DB values exactly, default missing actions to false
             merged[resource] = {
               create: rolePerms[resource].create ?? false,
               read:   rolePerms[resource].read   ?? false,
               update: rolePerms[resource].update ?? false,
               delete: rolePerms[resource].delete ?? false,
             };
+          } else {
+            merged[resource] = { create: false, read: false, update: false, delete: false };
           }
-          // else: resource not in DB at all — keep DEFAULT_PERMS value
         }
-        setPermissions(merged);
+        setPermState({ permissions: merged, loaded: true });
       } else {
-        // No permissions saved yet — use defaults (all true)
-        setPermissions(DEFAULT_PERMS);
+        const denied = {};
+        for (const resource of Object.keys(DEFAULT_PERMS)) {
+          denied[resource] = { create: false, read: false, update: false, delete: false };
+        }
+        setPermState({ permissions: denied, loaded: true });
       }
-    } catch {
-      setPermissions(DEFAULT_PERMS);
+    } catch (err) {
+      console.error("[permissions] Failed to load permissions:", err?.response?.status, err?.message);
+      const denied = {};
+      for (const resource of Object.keys(DEFAULT_PERMS)) {
+        denied[resource] = { create: false, read: false, update: false, delete: false };
+      }
+      setPermState({ permissions: denied, loaded: true });
     }
   }, []);
 
@@ -84,25 +97,38 @@ export function AuthProvider({ children }) {
       setLoading(false);
       return;
     }
-    api
-      .post("/auth/refresh", {})
-      .then(({ data }) => {
-        setAccessToken(data.accessToken);
-        return api.get("/auth/me");
-      })
-      .then(({ data }) => {
-        const u = data.user;
+    (async () => {
+      try {
+        const { data: refreshData } = await api.post("/auth/refresh", {});
+        setAccessToken(refreshData.accessToken);
+        const { data: meData } = await api.get("/auth/me");
+        const u = meData.user;
         if (u && !u.role && u.globalRole) u.role = u.globalRole;
         if (u && !u._id && u.id) u._id = u.id;
         setUser(u);
-        return loadPermissions(u.role || u.globalRole);
-      })
-      .catch(() => {
+        await loadPermissions(u.role || u.globalRole);
+      } catch {
         localStorage.removeItem("hasSession");
         setUser(false);
-      })
-      .finally(() => setLoading(false));
+        // Ensure permissions are marked loaded so nothing stays stuck
+        setPermState({ permissions: DEFAULT_PERMS, loaded: true });
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
+
+  // Refresh permissions when tab regains focus (picks up admin changes without re-login)
+  useEffect(() => {
+    function handleFocus() {
+      const role = user?.role || user?.globalRole;
+      if (role && role !== "admin" && role !== "super_admin") {
+        loadPermissions(role);
+      }
+    }
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [user, loadPermissions]);
 
   const login = useCallback(
     async (email, password) => {
@@ -130,7 +156,7 @@ export function AuthProvider({ children }) {
     clearAccessToken();
     localStorage.removeItem("hasSession");
     setUser(false);
-    setPermissions(DEFAULT_PERMS);
+    setPermState({ permissions: DEFAULT_PERMS, loaded: false });
     router.replace("/login");
   }, [router]);
 
@@ -138,11 +164,13 @@ export function AuthProvider({ children }) {
   function can(resource, action) {
     const role = user?.role || user?.globalRole;
     if (role === "admin" || role === "super_admin") return true;
-    return permissions?.[resource]?.[action] ?? true;
+    // department_head always gets full access (not permission-restricted)
+    if (role === "department_head") return true;
+    return permissions?.[resource]?.[action] ?? false;
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, setUser, permissions, can }}>
+    <AuthContext.Provider value={{ user, loading, permissionsLoaded, login, logout, setUser, permissions, can }}>
       {children}
     </AuthContext.Provider>
   );

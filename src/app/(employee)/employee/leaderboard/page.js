@@ -32,9 +32,7 @@ function ScoreBadge({ score }) {
           ? "text-[#e8a847] bg-[#e8a847]/10 border-[#e8a847]/20"
           : "text-[#ff4747] bg-[#ff4747]/10 border-[#ff4747]/20";
   return (
-    <span
-      className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] tracking-[0.1em] uppercase font-bold border ${cls}`}
-    >
+    <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] tracking-[0.1em] uppercase font-bold border ${cls}`}>
       {score} pts
     </span>
   );
@@ -46,6 +44,72 @@ function MetricChip({ icon: Icon, label, value, color }) {
       <Icon className={`w-3 h-3 ${color}`} />
       <span className="text-[10px] text-foreground-muted">{label}:</span>
       <span className={`text-[11px] font-bold ${color}`}>{value}</span>
+    </div>
+  );
+}
+
+// ─── Podium Card ──────────────────────────────────────────────
+function PodiumCard({ emp, position, isMe }) {
+  const configs = {
+    1: {
+      height: "h-36",
+      label: "1st",
+      labelColor: "text-[#e8a847]",
+      borderColor: "border-[#e8a847]/40",
+      bgColor: "bg-[#e8a847]/5",
+      avatarBg: "bg-[#e8a847]/10 border-[#e8a847]/30",
+      avatarColor: "text-[#e8a847]",
+      icon: <Trophy className="w-5 h-5 text-[#e8a847]" />,
+    },
+    2: {
+      height: "h-24",
+      label: "2nd",
+      labelColor: "text-foreground-muted",
+      borderColor: "border-foreground/20",
+      bgColor: "bg-foreground/5",
+      avatarBg: "bg-foreground/10 border-foreground/20",
+      avatarColor: "text-foreground-muted",
+      icon: <span className="text-[13px] font-bold text-foreground-muted">2</span>,
+    },
+    3: {
+      height: "h-20",
+      label: "3rd",
+      labelColor: "text-[#f87343]",
+      borderColor: "border-[#f87343]/40",
+      bgColor: "bg-[#f87343]/5",
+      avatarBg: "bg-[#f87343]/10 border-[#f87343]/30",
+      avatarColor: "text-[#f87343]",
+      icon: <span className="text-[13px] font-bold text-[#f87343]">3</span>,
+    },
+  };
+
+  const c = configs[position];
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      {/* Rank label above */}
+      <span className={`text-[11px] tracking-[0.15em] uppercase font-bold ${c.labelColor}`}>
+        {c.label}
+      </span>
+
+      {/* Avatar */}
+      <div className={`w-12 h-12 border-2 flex items-center justify-center text-[15px] font-bold ${c.avatarBg} ${c.avatarColor}`}>
+        {emp.name?.charAt(0)?.toUpperCase() || "?"}
+      </div>
+
+      {/* Name */}
+      <div className="text-center">
+        <p className={`text-[12px] font-bold text-foreground ${isMe ? "text-primary" : ""}`}>
+          {emp.name}
+          {isMe && <span className="ml-1 text-[9px] text-primary uppercase tracking-widest font-bold"> (You)</span>}
+        </p>
+        <p className={`text-[11px] font-bold mt-0.5 ${c.labelColor}`}>{emp.score} pts</p>
+      </div>
+
+      {/* Podium block */}
+      <div className={`w-full ${c.height} border ${c.borderColor} ${c.bgColor} flex items-center justify-center`}>
+        {c.icon}
+      </div>
     </div>
   );
 }
@@ -72,9 +136,7 @@ function EmployeeLeaderboardPageInner() {
     }
   }, [filterPeriod]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useEffect(() => { loadData(); }, [loadData]);
 
   if (loading) {
     return (
@@ -87,19 +149,19 @@ function EmployeeLeaderboardPageInner() {
 
   const topScore = data[0]?.score || 0;
   const myEntry = data.find((e) => e.userId === user?._id);
+  const top3 = data.slice(0, 3);
+  const rest = data.slice(3);
+
+  // Podium order: 2nd (left), 1st (center), 3rd (right)
+  const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean);
+  const podiumPositions = top3[1] ? [2, 1, 3] : top3[0] ? [1] : [];
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-[10px] tracking-[0.2em] uppercase text-foreground-muted mb-1">
-            Department
-          </p>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            Leaderboard
-          </h1>
-        </div>
+      <div>
+        <p className="text-[10px] tracking-[0.2em] uppercase text-foreground-muted mb-1">Department</p>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">Leaderboard</h1>
       </div>
 
       {/* My Score + Department Average */}
@@ -109,9 +171,7 @@ function EmployeeLeaderboardPageInner() {
             <TrendingUp className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted">
-              Your Score
-            </p>
+            <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted">Your Score</p>
             <p className="text-xl font-bold text-foreground">
               {myEntry?.score ?? 0}{" "}
               <span className="text-[11px] text-foreground-muted font-normal">
@@ -125,21 +185,17 @@ function EmployeeLeaderboardPageInner() {
             <BarChart3 className="w-5 h-5 text-[#47c8ff]" />
           </div>
           <div>
-            <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted">
-              Department Average
-            </p>
+            <p className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted">Department Average</p>
             <p className="text-xl font-bold text-foreground">
               {deptAvg}{" "}
-              <span className="text-[11px] text-foreground-muted font-normal">
-                pts
-              </span>
+              <span className="text-[11px] text-foreground-muted font-normal">pts</span>
             </p>
           </div>
         </div>
       </div>
 
       {/* Period Filter */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         {PERIODS.map((p) => (
           <button
             key={p.key}
@@ -155,7 +211,6 @@ function EmployeeLeaderboardPageInner() {
         ))}
       </div>
 
-      {/* Error */}
       {error && (
         <div className="flex items-center gap-3 px-4 py-3 border border-[#ff4747]/30 bg-[#ff4747]/5 text-[#ff4747]">
           <AlertCircle className="w-4 h-4 shrink-0" />
@@ -163,114 +218,83 @@ function EmployeeLeaderboardPageInner() {
         </div>
       )}
 
-      {/* Leaderboard Table */}
-      <div className="overflow-x-auto">
-        <div className="border border-outline bg-surface-low min-w-[640px]">
-          <div className="grid grid-cols-[40px_2fr_1fr_1fr_120px] gap-4 px-6 py-3 border-b border-outline bg-surface-container">
-            {["#", "Employee", "Tasks", "Overdue", "Score"].map((h) => (
-              <span
-                key={h}
-                className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted font-bold"
-              >
-                {h}
-              </span>
-            ))}
-          </div>
-
-          {data.length === 0 ? (
-            <div className="flex items-center justify-center py-16 text-foreground-muted">
-              <p className="text-[12px] tracking-[0.1em] uppercase">
-                No data available
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-outline">
-              {data.map((emp) => {
-                const isMe = emp.userId === user?._id;
-                const barWidth =
-                  topScore > 0 ? Math.round((emp.score / topScore) * 100) : 0;
-                return (
-                  <div
-                    key={emp.userId}
-                    className={`grid grid-cols-[40px_2fr_1fr_1fr_120px] gap-4 px-6 py-4 items-center transition-colors ${
-                      isMe
-                        ? "bg-primary/5 border-l-2 border-l-primary"
-                        : "hover:bg-surface-container"
-                    }`}
-                  >
-                    {/* Rank */}
-                    <div
-                      className={`flex items-center justify-center w-7 h-7 text-[11px] font-bold border ${
-                        emp.rank === 1
-                          ? "border-[#e8a847]/40 text-[#e8a847] bg-[#e8a847]/10"
-                          : emp.rank === 2
-                            ? "border-foreground/20 text-foreground-muted bg-foreground/10"
-                            : emp.rank === 3
-                              ? "border-[#f87343]/40 text-[#f87343] bg-[#f87343]/10"
-                              : "border-outline text-foreground-muted"
-                      }`}
-                    >
-                      {emp.rank === 1 ? (
-                        <Trophy className="w-3 h-3" />
-                      ) : (
-                        emp.rank
-                      )}
-                    </div>
-                    {/* Name */}
-                    <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                        <Users className="w-3.5 h-3.5 text-primary" />
-                      </div>
-                      <p className="text-[13px] font-semibold text-foreground">
-                        {emp.name}
-                        {isMe && (
-                          <span className="ml-2 text-[9px] text-primary tracking-[0.1em] uppercase font-bold">
-                            You
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                    {/* Tasks */}
-                    <MetricChip
-                      icon={CheckCircle2}
-                      label="Done"
-                      value={`${emp.tasksCompleted}/${emp.tasksTotal}`}
-                      color="text-[#47ff8a]"
+      {data.length === 0 ? (
+        <div className="border border-outline bg-surface-low flex items-center justify-center py-16 text-foreground-muted">
+          <p className="text-[12px] tracking-[0.1em] uppercase">No data available</p>
+        </div>
+      ) : (
+        <>
+          {/* ── Podium Top 3 ── */}
+          {top3.length > 0 && (
+            <div className="border border-outline bg-surface-low p-8">
+              <div className="flex items-end justify-center gap-6 max-w-sm mx-auto">
+                {podiumOrder.map((emp, i) => (
+                  <div key={emp.userId} className="flex-1">
+                    <PodiumCard
+                      emp={emp}
+                      position={podiumPositions[i]}
+                      isMe={emp.userId === user?._id}
                     />
-                    {/* Overdue */}
-                    <MetricChip
-                      icon={Clock}
-                      label="Overdue"
-                      value={emp.tasksOverdue}
-                      color={
-                        emp.tasksOverdue > 0
-                          ? "text-[#ff4747]"
-                          : "text-[#47ff8a]"
-                      }
-                    />
-                    {/* Score */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <ScoreBadge score={emp.score} />
-                      </div>
-                      <div className="h-1 bg-surface-high w-full">
-                        <div
-                          className="h-full bg-primary transition-all"
-                          style={{ width: `${barWidth}%` }}
-                        />
-                      </div>
-                    </div>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
           )}
-        </div>
-      </div>
+
+          {/* ── Rest of leaderboard ── */}
+          {rest.length > 0 && (
+            <div className="overflow-x-auto">
+              <div className="border border-outline bg-surface-low min-w-[640px]">
+                <div className="grid grid-cols-[40px_2fr_1fr_1fr_120px] gap-4 px-6 py-3 border-b border-outline bg-surface-container">
+                  {["#", "Employee", "Tasks", "Overdue", "Score"].map((h) => (
+                    <span key={h} className="text-[10px] tracking-[0.15em] uppercase text-foreground-muted font-bold">{h}</span>
+                  ))}
+                </div>
+                <div className="divide-y divide-outline">
+                  {rest.map((emp) => {
+                    const isMe = emp.userId === user?._id;
+                    const barWidth = topScore > 0 ? Math.round((emp.score / topScore) * 100) : 0;
+                    return (
+                      <div
+                        key={emp.userId}
+                        className={`grid grid-cols-[40px_2fr_1fr_1fr_120px] gap-4 px-6 py-4 items-center transition-colors ${
+                          isMe ? "bg-primary/5 border-l-2 border-l-primary" : "hover:bg-surface-container"
+                        }`}
+                      >
+                        <div className="flex items-center justify-center w-7 h-7 text-[11px] font-bold border border-outline text-foreground-muted">
+                          {emp.rank}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-7 h-7 bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                            <Users className="w-3.5 h-3.5 text-primary" />
+                          </div>
+                          <p className="text-[13px] font-semibold text-foreground">
+                            {emp.name}
+                            {isMe && <span className="ml-2 text-[9px] text-primary tracking-[0.1em] uppercase font-bold">You</span>}
+                          </p>
+                        </div>
+                        <MetricChip icon={CheckCircle2} label="Done" value={`${emp.tasksCompleted}/${emp.tasksTotal}`} color="text-[#47ff8a]" />
+                        <MetricChip icon={Clock} label="Overdue" value={emp.tasksOverdue} color={emp.tasksOverdue > 0 ? "text-[#ff4747]" : "text-[#47ff8a]"} />
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <ScoreBadge score={emp.score} />
+                          </div>
+                          <div className="h-1 bg-surface-high w-full">
+                            <div className="h-full bg-primary transition-all" style={{ width: `${barWidth}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       <p className="text-[10px] tracking-[0.1em] uppercase text-foreground-muted">
-        Scores are calculated automatically from task completion, deadlines, and
-        daily logs.
+        Scores are calculated automatically from task completion, deadlines, and daily logs.
       </p>
     </div>
   );

@@ -61,113 +61,90 @@ const NAV_CONFIG = {
   },
   lead: {
     icon: Briefcase,
-    label: "Lead Portal",
-    breadcrumb: "Lead",
+    label: "Employee Portal",
+    breadcrumb: "Employee",
     items: [
-      {
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        href: "/employee/dashboard",
-      },
+      { label: "Dashboard", icon: LayoutDashboard, href: "/employee/dashboard" },
       { label: "Projects", icon: FolderKanban, href: "/employee/projects" },
       { label: "Tasks", icon: CheckSquare, href: "/employee/tasks" },
       { label: "Reports", icon: FileText, href: "/employee/reports" },
-      {
-        label: "Daily Logs",
-        icon: ClipboardList,
-        href: "/employee/daily-logs",
-      },
+      { label: "Daily Logs", icon: ClipboardList, href: "/employee/daily-logs" },
       { label: "Issues", icon: Bug, href: "/employee/bugs" },
       { label: "Leaderboard", icon: Trophy, href: "/employee/leaderboard" },
     ],
   },
   project_manager: {
     icon: Briefcase,
-    label: "Project Manager",
-    breadcrumb: "PM",
+    label: "Employee Portal",
+    breadcrumb: "Employee",
     items: [
-      {
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        href: "/employee/dashboard",
-      },
+      { label: "Dashboard", icon: LayoutDashboard, href: "/employee/dashboard" },
       { label: "Projects", icon: FolderKanban, href: "/employee/projects" },
       { label: "Tasks", icon: CheckSquare, href: "/employee/tasks" },
       { label: "Reports", icon: FileText, href: "/employee/reports" },
-      {
-        label: "Daily Logs",
-        icon: ClipboardList,
-        href: "/employee/daily-logs",
-      },
+      { label: "Daily Logs", icon: ClipboardList, href: "/employee/daily-logs" },
       { label: "Leaderboard", icon: Trophy, href: "/employee/leaderboard" },
     ],
   },
   developer: {
     icon: Code,
-    label: "Developer",
-    breadcrumb: "Developer",
+    label: "Employee Portal",
+    breadcrumb: "Employee",
     items: [
-      {
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        href: "/employee/dashboard",
-      },
-      {
-        label: "My Projects",
-        icon: FolderKanban,
-        href: "/employee/projects",
-      },
-      {
-        label: "My Tasks",
-        icon: CheckSquare,
-        href: "/employee/tasks",
-      },
-      {
-        label: "Daily Logs",
-        icon: ClipboardList,
-        href: "/employee/daily-logs",
-      },
+      { label: "Dashboard", icon: LayoutDashboard, href: "/employee/dashboard" },
+      { label: "My Projects", icon: FolderKanban, href: "/employee/projects" },
+      { label: "My Tasks", icon: CheckSquare, href: "/employee/tasks" },
+      { label: "Daily Logs", icon: ClipboardList, href: "/employee/daily-logs" },
+      { label: "Issues", icon: Bug, href: "/employee/bugs" },
+      { label: "Leaderboard", icon: Trophy, href: "/employee/leaderboard" },
+    ],
+  },
+  contributor: {
+    icon: Code,
+    label: "Employee Portal",
+    breadcrumb: "Employee",
+    items: [
+      { label: "Dashboard", icon: LayoutDashboard, href: "/employee/dashboard" },
+      { label: "My Projects", icon: FolderKanban, href: "/employee/projects" },
+      { label: "My Tasks", icon: CheckSquare, href: "/employee/tasks" },
+      { label: "Daily Logs", icon: ClipboardList, href: "/employee/daily-logs" },
       { label: "Issues", icon: Bug, href: "/employee/bugs" },
       { label: "Leaderboard", icon: Trophy, href: "/employee/leaderboard" },
     ],
   },
   tester: {
     icon: FlaskConical,
-    label: "Tester",
-    breadcrumb: "Tester",
+    label: "Employee Portal",
+    breadcrumb: "Employee",
     items: [
-      {
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        href: "/employee/dashboard",
-      },
-      {
-        label: "Projects",
-        icon: FolderKanban,
-        href: "/employee/projects",
-      },
-      {
-        label: "Tasks",
-        icon: CheckSquare,
-        href: "/employee/tasks",
-      },
-      {
-        label: "Test Cases",
-        icon: ShieldCheck,
-        href: "/employee/testing",
-      },
+      { label: "Dashboard", icon: LayoutDashboard, href: "/employee/dashboard" },
+      { label: "Projects", icon: FolderKanban, href: "/employee/projects" },
+      { label: "Tasks", icon: CheckSquare, href: "/employee/tasks" },
+      { label: "Test Cases", icon: ShieldCheck, href: "/employee/testing" },
+      { label: "Issues", icon: Bug, href: "/employee/bugs" },
+      { label: "Leaderboard", icon: Trophy, href: "/employee/leaderboard" },
+    ],
+  },
+  reviewer: {
+    icon: FlaskConical,
+    label: "Employee Portal",
+    breadcrumb: "Employee",
+    items: [
+      { label: "Dashboard", icon: LayoutDashboard, href: "/employee/dashboard" },
+      { label: "Projects", icon: FolderKanban, href: "/employee/projects" },
+      { label: "Tasks", icon: CheckSquare, href: "/employee/tasks" },
       { label: "Issues", icon: Bug, href: "/employee/bugs" },
       { label: "Leaderboard", icon: Trophy, href: "/employee/leaderboard" },
     ],
   },
 };
 
-const ALLOWED_ROLES = ["employee", "project_manager", "developer", "tester", "lead"];
+const ALLOWED_ROLES = ["employee", "project_manager", "developer", "tester", "lead", "contributor", "reviewer"];
 
 export default function EmployeeLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, loading, logout, can } = useAuth();
+  const { user, loading, logout, can, permissionsLoaded } = useAuth();
   const [isManager, setIsManager] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -237,7 +214,7 @@ export default function EmployeeLayout({ children }) {
   const canSeeReportsFinal = canSeeReports || isManager;
   const navItems = [...navItemsBase].filter((item) => {
     const resource = NAV_PERMISSION_MAP[item.href];
-    if (!resource) return true; // dashboard and others always visible
+    if (!resource) return true;
     return can(resource, "read");
   });
   if (
